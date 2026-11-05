@@ -1,5 +1,5 @@
 /* 入境卡助手 · 官方表单填表器 fill.js — 由 publish-build.py 自动生成，勿手改
-   用法：在官方申报页点「填表」书签（动态加载本文件）→ 粘贴填表码 → 自动填入 */
+   用法：在官方申报表单页点「填表」书签（动态加载本文件）→ 粘贴填表码 → 自动填入 */
 function bmMy(d){
   var banner=null;
   function note(m,s){
@@ -274,15 +274,21 @@ var FILL_JS_URL='https://2691199739-droid.github.io/entry-card/fill.js';
 (function(){
   function bail(m){try{alert(m)}catch(e){}}
   window.__entryFill=function(){
-    var c=null;
-    try{c=prompt('入境卡填表：请长按粘贴填表码（已在助手页面点「生成填表码」复制）','')}catch(e){}
-    if(!c||!String(c).trim())return;
-    var t=String(c).trim();
     try{
-      var d=JSON.parse(decodeURIComponent(escape(atob(t))));
-      if(!d||!d.passport)throw 0;
+      if(!document.body){bail('页面还没加载完：请等表单完全显示后再点书签');return}
+      var c=null;
+      try{c=prompt('入境卡填表：请长按粘贴填表码（已在助手页面点「生成填表码」复制）','')}catch(e){}
+      if(!c||!String(c).trim())return;
+      var t=String(c).trim();
+      var d=null;
+      try{d=JSON.parse(decodeURIComponent(escape(atob(t))))}catch(e){}
+      if(!d||!d.passport){bail('填表码无效：请回到入境卡助手页面，重新点「生成填表码」复制后再试');return}
+      var isMY=!!(document.getElementById('name')&&document.getElementById('passNo'));
+      var isTH=false;
+      try{isTH=!!document.querySelector('[formcontrolname=passportNo]')}catch(e){}
+      if(d.dest==='TH'?!isTH:!isMY){bail('当前页面不是申报表单页：请先在官网点 REGISTER / Apply 按钮进入表单页，等表单完全显示后再点书签「填表」');return}
       (d.dest==='TH'?bmTh:bmMy)(d);
-    }catch(e){bail('填表码无效：请回到入境卡助手页面，重新点「生成填表码」复制后再试')}
+    }catch(e){bail('填表脚本出错：'+(e&&e.message?e.message:'未知错误')+'。请截图反馈给管理员')}
   };
   if(window.__entryFillLoaded){window.__entryFill()}else{window.__entryFillLoaded=1;window.__entryFill()}
 })();

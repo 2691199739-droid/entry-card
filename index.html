@@ -613,7 +613,7 @@ footer .fine{border-top:1px solid rgba(255,255,255,.14);margin-top:26px;padding-
       <ol style="margin:8px 0 4px;padding-left:20px">
         <li><b>首次</b>：点「① 安装填表书签」复制 → Safari 随便收藏一个网页 → 打开书签编辑：标题改成「填表」，网址清空后粘贴刚复制的内容 → 存储。这一步只做一次。</li>
         <li><b>每次</b>：填完上面资料后点「② 生成填表码」，自动复制。</li>
-        <li>打开官方申报页（ Malaysia 点 <a href="https://imigresen-online.imi.gov.my/mdac/main" target="_blank" rel="noopener">imigresen-online.imi.gov.my</a> / Thailand 点 <a href="https://tdac.immigration.go.th/visitors/arrival" target="_blank" rel="noopener">tdac.immigration.go.th</a> ）→ 点书签「填表」→ 弹窗里长按粘贴 → 确定，全部资料自动填入。核对后你手动提交。</li>
+        <li>打开官方申报页（ Malaysia 点 <a href="https://imigresen-online.imi.gov.my/mdac/main" target="_blank" rel="noopener">imigresen-online.imi.gov.my</a> 再点官网菜单的 <b>REGISTER</b> 进入表单 / Thailand 点 <a href="https://tdac.immigration.go.th/visitors/arrival" target="_blank" rel="noopener">tdac.immigration.go.th</a> ）→ 等<b>表单页面完全显示</b> → 点书签「填表」→ 弹窗里长按粘贴 → 确定，全部资料自动填入。核对后你手动提交。</li>
       </ol>
       <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">
         <button type="button" class="btn btn-line" id="btnIosBm">① 安装填表书签（首次一次）· Install bookmark</button>
@@ -2134,9 +2134,9 @@ function init(){
     }else{fallback()}
   }
   $('#btnIosBm').addEventListener('click',function(){
-    var js="(function(){var s=document.createElement('script');s.src='"+FILL_JS_URL+"?t='+Date.now();s.onerror=function(){alert('书签脚本加载失败：请检查手机网络（需可访问 GitHub）后重试')};document.body.appendChild(s)})()";
-    var url='javascript:'+encodeURIComponent(js);
-    copyText(url,'已复制书签安装码。接下来（只需这一次）：1. Safari 随便收藏一个网页；2. 书签图标 → 编辑；3. 标题改成「填表」，网址清空后粘贴刚复制的内容 → 存储。','复制失败：请重试一次');
+    /* 裸码标准书签（不带百分号编码，iOS Safari 兼容性最好） */
+    var bm="javascript:(function(){var b=document.body;if(!b){alert('页面还没加载完，请等两秒再点书签');return}var s=document.createElement('script');s.src='"+FILL_JS_URL+"?t='+Date.now();s.onerror=function(){alert('脚本加载失败：请检查手机网络后重试')};b.appendChild(s)})()";
+    copyText(bm,'已复制书签安装码。接下来（只需这一次）：1. Safari 随便收藏一个网页；2. 书签图标 → 编辑；3. 标题改成「填表」，网址清空后粘贴刚复制的内容 → 存储。','复制失败：请重试一次');
   });
   $('#btnIosCode').addEventListener('click',function(){
     var d=validate();
