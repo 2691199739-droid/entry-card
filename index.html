@@ -1670,10 +1670,24 @@ function runOcr(img){
     setOcr('识别出错，请重试或手动填写 Error: '+(e&&e.message?e.message:'unknown'),0,'bad');
   });
 }
+/* ===== 本机姓名记忆（各人手机只存各人核对过的姓名，页面本身不含任何资料）===== */
+function loadMyProfile(){
+  try{return JSON.parse(localStorage.getItem('entryCardMyProfile')||'null')}catch(e){return null}
+}
+function saveMyProfile(name,passport){
+  try{
+    if(name&&passport){localStorage.setItem('entryCardMyProfile',JSON.stringify({name:String(name).toUpperCase().trim(),passport:String(passport).toUpperCase().trim()}))}
+  }catch(e){}
+}
 function applyMrz(m){
-  var profileMatch=false;
+  var profileMatch=false,savedMatch=false;
   if(VERIFIED_PROFILE&&m.passportNo===VERIFIED_PROFILE.passport){
     m.name=VERIFIED_PROFILE.name;profileMatch=true;
+  }
+  /* 本机记忆的核对姓名：同一本护照（号一致）时优先使用，识别丢字不再需要每次手改 */
+  var saved=loadMyProfile();
+  if(!profileMatch&&saved&&saved.passport===m.passportNo&&saved.name){
+    m.name=saved.name;savedMatch=true;
   }
   var setKeys=[];
   function set(k,v){
@@ -1686,11 +1700,13 @@ function applyMrz(m){
   set('pob',m.pob||m.nationality);
   MRZ_SUR=m.surName||'';MRZ_GIV=m.givenName||'';
   if(profileMatch){MRZ_SUR='WANG';MRZ_GIV='YA JIE'}
+  if(savedMatch){var np=String(m.name||'').split(' ');MRZ_SUR=np[0]||'';MRZ_GIV=np.slice(1).join(' ')}
   saveDraftLocal();
   var msg='识别完成：已自动填入 '+setKeys.length+' 项';
   if(m.warn)msg+='；'+m.warn;
   if(m.pob)msg+='；出生地已按照片识别结果填入 Place of birth recognized from photo';
   if(profileMatch)msg+='；识别结果与内置已验证资料一致，姓名按已验证资料填入 Verified profile matched';
+  if(savedMatch)msg+='；姓名已按你上次核对的结果填入 Name restored from your last verified entry';
   msg+='。请核对，并补充联系方式与行程信息。Auto-filled '+setKeys.length+' fields';
   setOcr(msg,100,'ok');
   if(m.warn)toast(m.warn);
@@ -2045,6 +2061,7 @@ function init(){
   /* 资料定稿：标注目的地并补全泰国侧派生字段（推送插件与手机书签共用） */
   function finalizeDraft(d){
     d.dest=DEST;
+    if(d.name&&d.passport)saveMyProfile(d.name,d.passport);
     if(DEST==='TH'){
       d.surName=(MRZ_SUR||String(d.name||'').split(' ')[0]||'').toUpperCase();
       d.givenName=(MRZ_GIV||String(d.name||'').split(' ').slice(1).join(' ')).toUpperCase();
