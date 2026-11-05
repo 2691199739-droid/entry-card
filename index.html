@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>入境卡办理助手 · 马来西亚 MDAC &amp; 泰国 TDAC</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1F44'/%3E%3Cpath d='M16 5.5l2.6 6.9 7.4.2-5.9 4.5 2.2 7.1L16 20.1l-6.3 4.1 2.2-7.1-5.9-4.5 7.4-.2z' fill='%23FFC72C'/%3E%3C/svg%3E">
+<style>
+/* ===== 设计令牌 ===== */
+:root{
+  --navy:#0A1F44; --navy2:#122E5C; --navy3:#1A3A70;
+  --yellow:#FFC72C; --yellow-d:#F0B000; --yellow-soft:#FFF4D6;
+  --red:#C8102E; --red-soft:#FDEBEF;
+  --paper:#F5F7FA; --card:#FFFFFF; --line:#E2E7EF; --line-2:#CFD8E5;
+  --ink:#17263D; --mut:#5A6B85; --mut-2:#8A97AC;
+  --ok:#0E8A5F; --ok-soft:#E6F5EE;
+  --shadow:0 1px 2px rgba(10,31,68,.06),0 8px 24px rgba(10,31,68,.07);
+  --radius:12px;
+  --font:"Segoe UI","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);font-size:15px;line-height:1.65}
+img{max-width:100%}
+a{color:var(--navy2)}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* ===== 布局基础 ===== */
+.wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+.view{display:none}
+.view.on{display:block}
+section{padding:56px 0}
+h2{font-size:26px;line-height:1.3;letter-spacing:-.3px;margin-bottom:6px}
+.sec-head{margin-bottom:28px}
+.sec-sub{color:var(--mut);max-width:640px}
+.kicker{font-size:13px;font-weight:700;color:var(--navy3);letter-spacing:2px;margin-bottom:10px}
+.center{text-align:center}
+.center .sec-sub{margin-left:auto;margin-right:auto}
+
+/* ===== 顶栏 ===== */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar .wrap{display:flex;align-items:center;gap:18px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:var(--navy);text-decoration:none;white-space:nowrap}
+.brand small{display:block;font-size:10px;font-weight:600;color:var(--mut-2);letter-spacing:.5px;line-height:1.2}
+.brand .mark{width:34px;height:34px;flex:0 0 34px;border-radius:8px;background:var(--navy);display:grid;place-items:center}
+.brand .mark svg{width:20px;height:20px}
+.nav{display:none;gap:4px;margin-left:auto}
+.nav a{padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--ink);font-size:14px}
+.nav a:hover{background:var(--paper)}
+.nav a.on{background:var(--yellow-soft);color:var(--navy);font-weight:700}
+@media(min-width:768px){
+  .nav{display:flex}
+}
+
+/* ===== Hero ===== */
+.hero{background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 58%,#153764 100%);color:#fff;padding:64px 0 72px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,199,44,.16),transparent);pointer-events:none}
+.hero .wrap{display:grid;gap:40px;align-items:center;position:relative;z-index:1}
+@media(min-width:900px){.hero .wrap{grid-template-columns:1.05fr .95fr}}
+.hero .pill{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 14px;margin-bottom:18px;color:#FFE9A8}
+.hero .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--yellow);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.hero h1{font-size:34px;line-height:1.22;letter-spacing:-.5px;margin-bottom:8px}
+@media(min-width:900px){.hero h1{font-size:44px}}
+.hero .en{font-size:15px;font-weight:600;color:#AFC3E8;margin-bottom:16px}
+.hero p.lead{color:#D6E2F5;max-width:560px;margin-bottom:26px}
+.hero .lead .zh{display:block;color:#E9F0FB}
+.country-cards{display:grid;gap:12px;margin-bottom:16px}
+@media(min-width:640px){.country-cards{grid-template-columns:1fr 1fr}}
+.country-card{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.2);border-radius:16px;padding:15px 16px;text-decoration:none;color:#fff;transition:border-color .2s,background .2s,transform .15s}
+.country-card:hover{border-color:var(--yellow);background:rgba(255,255,255,.13);transform:translateY(-1px)}
+.country-card:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.cc-flag{flex:0 0 48px;width:48px;height:34px;border-radius:8px;overflow:hidden;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.cc-flag svg{width:100%;height:100%;display:block}
+.cc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.cc-body b{font-size:16.5px;line-height:1.2}
+.cc-body i{font-style:normal;font-size:11px;color:#AFC3E8;font-weight:600;letter-spacing:.2px}
+.cc-body small{font-size:12px;color:#93A9D6}
+.cc-go{flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:var(--yellow);color:var(--navy);display:grid;place-items:center}
+.cc-go svg{width:15px;height:15px}
+.hero-more a{color:#AFC3E8;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.hero-more a:hover{color:#fff}
+
+/* 目的地切换条 + 双国字段显隐 */
+.dest-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#EEF3FB;border:1px solid var(--line-2);border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:14px;color:var(--ink)}
+.dest-bar b{font-size:15px;color:var(--navy)}
+.dest-bar a{color:var(--navy);font-weight:700;text-decoration:underline;text-underline-offset:3px;font-size:13px}
+.dest-bar a:hover{color:var(--yellow-d)}
+.dest-flag{width:26px;height:18px;border-radius:4px;overflow:hidden;box-shadow:0 1px 4px rgba(10,31,68,.25);flex:0 0 26px}
+.dest-flag svg{width:100%;height:100%;display:block}
+[data-f="purpose"],[data-f="occupation"],[data-f="deptflight"]{display:none}
+body.dest-th [data-f="purpose"],body.dest-th [data-f="occupation"],body.dest-th [data-f="deptflight"]{display:block}
+body.dest-th [data-f="passportExp"]{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:13px 22px;font-size:15px;font-weight:700;text-decoration:none;border:none;min-height:44px}
+.btn-yellow{background:var(--yellow);color:var(--navy)}
+.btn-yellow:hover{background:var(--yellow-d)}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-navy:hover{background:var(--navy2)}
+.btn-line{background:#fff;color:var(--navy);border:1px solid var(--line-2)}
+.btn-line:hover{background:var(--paper)}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px;min-height:36px}
+
+/* Hero 演示卡 */
+.demo-card{background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(2,12,30,.45);overflow:hidden}
+.demo-top{display:flex;align-items:center;gap:10px;background:#EDF1F7;border-bottom:1px solid var(--line);padding:11px 16px;font-size:12px;color:var(--mut);font-weight:600}
+.demo-top .badge{margin-left:auto;background:var(--yellow);color:var(--navy);font-weight:800;font-size:11px;border-radius:999px;padding:3px 10px;letter-spacing:.5px}
+.demo-top .badge.live{animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(255,199,44,.35)}}
+.demo-body{padding:18px 20px 20px}
+.demo-row{display:grid;grid-template-columns:96px 1fr;gap:10px;align-items:center;padding:6px 0}
+.demo-row label{font-size:11.5px;color:var(--mut);font-weight:600;text-align:right}
+.demo-row .box{height:30px;border:1px solid var(--line);border-radius:7px;background:#FAFBFD;padding:6px 9px;font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden}
+.demo-row .box.typing{border-color:var(--yellow);background:var(--yellow-soft)}
+.demo-row .box.done{border-color:var(--ok);background:var(--ok-soft);position:relative}
+.demo-row .box.done::after{content:"✓";position:absolute;right:8px;top:4px;color:var(--ok);font-weight:800;font-size:13px}
+
+/* ===== 步骤 ===== */
+.steps{display:grid;gap:16px}
+@media(min-width:860px){.steps{grid-template-columns:repeat(3,1fr)}}
+.step{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 22px;box-shadow:var(--shadow);position:relative}
+.step .no{font-size:13px;font-weight:800;color:var(--navy3);letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.step .no::after{content:"";height:1px;flex:1;background:var(--line)}
+.step h3{font-size:16.5px;margin-bottom:4px}
+.step .en{font-size:12px;color:var(--mut-2);font-weight:600;margin-bottom:10px}
+.step p{font-size:13.5px;color:var(--mut)}
+.step p b{color:var(--navy)}
+
+/* ===== 事实条 ===== */
+.facts{display:grid;gap:12px;margin-top:-34px;position:relative;z-index:2}
+@media(min-width:860px){.facts{grid-template-columns:repeat(3,1fr)}}
+.fact{background:var(--navy);color:#fff;border-radius:var(--radius);padding:18px 20px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow)}
+.fact b{font-size:21px;letter-spacing:-.4px}
+.fact b em{font-style:normal;color:var(--yellow)}
+.fact span{font-size:12.5px;color:#AFC3E8}
+.fact i{font-style:normal;font-size:11px;color:#7E92BC}
+
+/* ===== FAQ ===== */
+.faq{max-width:780px;margin:0 auto}
+.faq details{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.faq summary{cursor:pointer;padding:15px 18px;font-weight:700;font-size:14.5px;list-style:none;display:flex;align-items:center;gap:10px}
+.faq summary::before{content:"+";font-size:18px;color:var(--navy3);font-weight:800;flex:0 0 auto}
+.faq details[open] summary::before{content:"–"}
+.faq summary small{color:var(--mut-2);font-weight:600;font-size:12px;margin-left:auto;text-align:right}
+.faq .a{padding:0 18px 16px 44px;color:var(--mut);font-size:13.5px}
+.faq .a a{font-weight:600}
+
+/* ===== 表单 ===== */
+.form-sec{background:var(--paper)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px 22px;margin-bottom:18px}
+@media(min-width:720px){.panel{padding:30px 32px}}
+.panel > h3{font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.panel > .en{font-size:12.5px;color:var(--mut-2);font-weight:600;margin-bottom:18px}
+.panel .edit-link{margin-left:auto;font-size:13px;font-weight:700}
+.grid{display:grid;gap:16px 18px}
+@media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+.field label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+.field label .en{display:block;font-size:11.5px;color:var(--mut-2);font-weight:600;letter-spacing:.2px}
+.field label .req{color:var(--red);margin-left:2px}
+.field input,.field select{width:100%;height:46px;border:1px solid var(--line-2);border-radius:9px;padding:0 13px;font-size:16px;background:#fff;color:var(--ink)}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%235A6B85' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.field input:hover,.field select:hover{border-color:var(--mut-2)}
+.field input:focus,.field select:focus{border-color:var(--navy3);outline:none;box-shadow:0 0 0 3px rgba(26,58,112,.12)}
+.field .hint{font-size:11.5px;color:var(--mut-2);margin-top:5px}
+.field.err input,.field.err select{border-color:var(--red);background:var(--red-soft)}
+.field .msg{display:none;font-size:12px;color:var(--red);margin-top:5px;font-weight:600}
+.field.err .msg{display:block}
+.form-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.checkline{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--mut);margin:18px 0 6px}
+.checkline input{width:19px;height:19px;margin-top:2px;accent-color:var(--navy)}
+.checkline.errtext{color:var(--red);font-weight:700}
+
+/* ===== 核对 ===== */
+.review-group{margin-bottom:14px}
+.review-group h4{font-size:14px;color:var(--navy3);letter-spacing:.6px;margin-bottom:8px;display:flex;align-items:center}
+.review-group h4 a{margin-left:auto;font-size:12.5px}
+.kv{display:grid;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.kv > div{display:grid;grid-template-columns:44% 56%;border-bottom:1px solid var(--line)}
+.kv > div:last-child{border-bottom:none}
+.kv dt,.kv dd{padding:10px 14px;font-size:13.5px}
+.kv dt{color:var(--mut);background:#FAFBFD;border-right:1px solid var(--line)}
+.kv dt .en{display:block;font-size:11px;color:var(--mut-2)}
+.kv dd{font-weight:600;word-break:break-word}
+@media(max-width:520px){.kv > div{grid-template-columns:100%}.kv dt{border-right:none;border-bottom:1px dashed var(--line)}}
+
+/* ===== 护照识别上传 ===== */
+.ocr-zone{border:2px dashed var(--line-2);border-radius:12px;padding:28px 20px;text-align:center;background:#FAFBFD;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.ocr-zone:hover,.ocr-zone.dragover{border-color:var(--navy3);background:var(--yellow-soft)}
+.ocr-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.ocr-zone .ic{width:52px;height:52px;margin:0 auto 12px;border-radius:12px;background:var(--navy);display:grid;place-items:center}
+.ocr-zone .ic svg{width:26px;height:26px}
+.ocr-zone b{font-size:15.5px;display:block;margin-bottom:3px}
+.ocr-zone span{font-size:12.5px;color:var(--mut);display:block}
+.ocr-status{display:none;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--mut)}
+.ocr-status.show{display:flex;align-items:center;gap:10px}
+.ocr-status .spin{width:16px;height:16px;flex:0 0 16px;border:2.5px solid var(--line-2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ocr-status .bar{flex:1;height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.ocr-status .bar i{display:block;height:100%;width:0;background:var(--yellow-d);border-radius:99px;transition:width .3s}
+.ocr-status.ok .spin{animation:none;border-color:var(--ok);border-top-color:var(--ok)}
+.ocr-status.bad{border-color:#F0C2CB;background:var(--red-soft)}
+.autoflash{animation:autoflash 1.6s}
+@keyframes autoflash{0%,60%{background:var(--yellow-soft);border-color:var(--yellow-d)}100%{background:#fff}}
+
+/* ===== 提示 ===== */
+.notice{background:var(--yellow-soft);border:1px solid #F2DFA0;border-radius:10px;padding:14px 16px;font-size:13px;color:#6B5410;margin:16px 0}
+.notice b{color:#4A3900}
+.warn{background:var(--red-soft);border:1px solid #F0C2CB;border-radius:10px;padding:14px 16px;font-size:13px;color:#8E0F23;margin:16px 0}
+
+/* ===== 页脚 ===== */
+footer{background:var(--navy);color:#AFC3E8;padding:44px 0 36px;margin-top:20px}
+footer .f-grid{display:grid;gap:24px}
+@media(min-width:860px){footer .f-grid{grid-template-columns:1.4fr 1fr}}
+footer h5{color:#fff;font-size:14px;margin-bottom:10px}
+footer p,footer li{font-size:12.5px;line-height:1.7}
+footer ul{list-style:none}
+footer a{color:#FFE9A8;font-weight:600}
+footer .brand{color:#fff;margin-bottom:12px}
+footer .fine{border-top:1px solid rgba(255,255,255,.14);margin-top:26px;padding-top:16px;font-size:11.5px;color:#7E92BC;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between}
+
+/* ===== Toast ===== */
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;font-size:13.5px;font-weight:600;border-radius:10px;padding:11px 20px;opacity:0;pointer-events:none;transition:all .25s;z-index:99;box-shadow:0 10px 30px rgba(2,12,30,.4);max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ===== 顶栏 ===== -->
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#/home">
+      <span class="mark"><svg viewBox="0 0 32 32" fill="none"><path d="M16 5.5l2.6 6.9 7.4.2-5.9 4.5 2.2 7.1L16 20.1l-6.3 4.1 2.2-7.1-5.9-4.5 7.4-.2z" fill="#FFC72C"/></svg></span>
+      <span>入境卡办理助手<small>MDAC &amp; TDAC Arrival Cards</small></span>
+    </a>
+    <nav class="nav" id="mainNav">
+      <a href="#/home" data-nav="home">首页</a>
+      <a href="#/apply" data-nav="apply">开始办理</a>
+      <a href="#/home" data-nav="faq-anchor">常见问题</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ===== 视图：首页 ===== -->
+<section class="view on" id="view-home">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <span class="pill"><span class="dot"></span>入境卡办理助手 · 官方免费 · 本工具辅助填写</span>
+        <h1>选择国家，一次填写资料，<br>自动录入官方入境卡系统</h1>
+        <div class="en">Malaysia MDAC &amp; Thailand TDAC — fill once, auto-complete the official portal</div>
+        <p class="lead"><span class="zh">点选下方国家卡片进入办理：填好资料、点「确认完成」，对应国家的官方入境卡页面会自动打开并一键录入全部字段，你只需核对并亲手提交。</span>Pick a country below, fill in your details — the official arrival card opens and auto-completes; you just verify and submit.</p>
+        <div class="country-cards">
+          <a class="country-card" href="#/apply" data-dest="MY">
+            <span class="cc-flag" aria-hidden="true"><svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#fff"/><rect y="1.2" width="32" height="3.2" fill="#C8102E"/><rect y="8.8" width="32" height="3.2" fill="#C8102E"/><rect y="17.6" width="32" height="3.2" fill="#C8102E"/><rect width="14.5" height="22" fill="#012169"/><path d="M8.6 7.6a3.8 3.8 0 100 6.8 4.8 4.8 0 01-1.4-6.7 3.4 3.4 0 011.4-.1z" fill="#FFC72C"/><circle cx="10.4" cy="9.1" r=".8" fill="#FFC72C"/></svg></span>
+            <span class="cc-body"><b>马来西亚入境卡</b><i>MDAC · Malaysia Digital Arrival Card</i><small>免费官方申请 · 行程须在 3 天内</small></span>
+            <span class="cc-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </a>
+          <a class="country-card" href="#/apply" data-dest="TH">
+            <span class="cc-flag" aria-hidden="true"><svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#A51931"/><rect y="3.6" width="32" height="14.8" fill="#F4F5F8"/><rect y="7.3" width="32" height="7.4" fill="#2D2A4A"/></svg></span>
+            <span class="cc-body"><b>泰国入境卡</b><i>TDAC · Thailand Digital Arrival Card</i><small>免费官方申请 · 抵达前 3 天内提交</small></span>
+            <span class="cc-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </a>
+        </div>
+        <div class="hero-more"><a href="#how">查看办理流程 How it works</a></div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-top">
+          <svg width="14" height="14" viewBox="0 0 14 14"><circle cx="3" cy="3" r="2" fill="#C8102E"/><circle cx="7" cy="3" r="2" fill="#FFC72C"/><circle cx="11" cy="3" r="2" fill="#0E8A5F"/></svg>
+          imigresen-online.imi.gov.my/mdac
+          <span class="badge" id="demoBadge">AUTO-FILL</span>
+        </div>
+        <div class="demo-body" id="demoBody">
+          <div class="demo-row"><label>Name</label><div class="box" data-demo="SAN FANG"></div></div>
+          <div class="demo-row"><label>Passport No.</label><div class="box" data-demo="E12345678"></div></div>
+          <div class="demo-row"><label>Date of Birth</label><div class="box" data-demo="01/01/1990"></div></div>
+          <div class="demo-row"><label>Date of Arrival</label><div class="box" data-demo="05/11/2026"></div></div>
+          <div class="demo-row"><label>Flight No.</label><div class="box" data-demo="MH388"></div></div>
+          <div class="demo-row"><label>Address</label><div class="box" data-demo="No.8, Jalan Klang"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="facts">
+      <div class="fact"><b>3 <em>天内</em>提交</b><span>行程须在提交日起 3 天内（含当日）</span><i>Arrival must be within 3 days of submission</i></div>
+      <div class="fact"><b><em>免费</em>官方申请</b><span>官方系统申请不收取任何费用</span><i>The official portal is free of charge</i></div>
+      <div class="fact"><b>21 <em>个字段</em>自动填入</b><span>个人信息与行程信息一键录入</span><i>All fields auto-completed in one click</i></div>
+    </div>
+
+    <section id="how">
+      <div class="sec-head center">
+        <div class="kicker">HOW IT WORKS</div>
+        <h2>三步完成入境卡办理</h2>
+        <p class="sec-sub">Three steps from form-filling to submission</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="no">STEP 01</div>
+          <h3>在本页填写并核对资料</h3>
+          <div class="en">Fill in and review your details here</div>
+          <p>按护照信息填写各项内容，本页会校验邮箱、日期与<b>3 天入境窗口</b>，资料只保存在你的浏览器本地。</p>
+        </div>
+        <div class="step">
+          <div class="no">STEP 02</div>
+          <h3>点「确认完成」，自动录入</h3>
+          <div class="en">Confirm — official page opens &amp; auto-fills</div>
+          <p>核对无误后点<b>确认完成</b>——官方入境卡页面自动打开，全部字段自动填入。</p>
+        </div>
+        <div class="step">
+          <div class="no">STEP 03</div>
+          <h3>核对后亲自提交</h3>
+          <div class="en">Review and submit yourself</div>
+          <p>在<b>官方页面</b>核对资料、拖滑块验证后提交；查收含 PIN 码的确认邮件。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="sec-head center">
+        <div class="kicker">FAQ</div>
+        <h2>常见问题</h2>
+        <p class="sec-sub">Frequently asked questions</p>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>什么是 MDAC？谁需要填？<small>What is MDAC and who needs it?</small></summary>
+          <div class="a">MDAC（Malaysia Digital Arrival Card，马来西亚数字入境卡）取代了抵达时填写的纸质入境卡，外国旅客入境马来西亚前须在<b>官方门户网站</b>在线填报；马来西亚公民、永久居民等可豁免，具体范围以移民局说明为准。MDAC (Malaysia Digital Arrival Card) replaces the paper arrival card and must be completed online by foreign visitors before arrival.</div>
+        </details>
+        <details>
+          <summary>什么时候提交？可以提前多久？<small>When should I submit?</small></summary>
+          <div class="a">官方要求行程须在<b>提交日起 3 天内（含提交当日）</b>，过早提交不会被接受；提交后处理即时完成，你会收到含 <b>PIN 码 / 二维码</b>的确认邮件。Your arrival must fall within 3 days including the submission date. Processing is instant and a confirmation email with a PIN is sent.</div>
+        </details>
+        <details>
+          <summary>收费吗？这个网站和官方什么关系？<small>Is it free? Is this the official site?</small></summary>
+          <div class="a">官方申请<b>完全免费</b>。本站是独立的<b>辅助填写工具</b>，与马来西亚移民局无任何关联：帮你整理资料并自动填入官方表单，不代收任何官方费用。The official application is free. This site is an independent filling-assistance tool, not affiliated with the Malaysia Immigration Department.</div>
+        </details>
+        <details>
+          <summary>「自动填写」安全吗？我的资料存在哪？<small>Is auto-fill safe? Where is my data stored?</small></summary>
+          <div class="a">资料只保存在<b>你自己的浏览器本地</b>（localStorage），不上传任何服务器；「自动填写」按钮只是把资料写进官方页面的表单，<b>不会替你提交</b>，最终提交始终由你在官方页面亲自确认。Data stays in your own browser only. The button only fills the form — submission is always confirmed by you.</div>
+        </details>
+        <details>
+          <summary>手机上能用自动录入吗？<small>Does auto-fill work on mobile?</small></summary>
+          <div class="a">自动录入通过电脑上双击「<b>MDAC一键启动.bat</b>」打开本页使用（内置浏览器插件，全程自动填入）；手机浏览器没有插件，无法自动录入，请改在<b>电脑端</b>操作。Auto-fill runs on desktop via the one-click launcher with the built-in extension.</div>
+        </details>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ===== 视图：填写资料 ===== -->
+<section class="view" id="view-apply">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">STEP 01 · APPLY</div>
+      <h2>填写入境卡资料</h2>
+      <p class="sec-sub">先上传护照照片自动识别，再补齐其余信息；所有资料仅保存在你的浏览器本地。</p>
+    </div>
+
+    <div class="dest-bar" id="destBar">
+      <span class="dest-flag" id="destFlag" aria-hidden="true"><svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#fff"/><rect y="1.2" width="32" height="3.2" fill="#C8102E"/><rect y="8.8" width="32" height="3.2" fill="#C8102E"/><rect y="17.6" width="32" height="3.2" fill="#C8102E"/><rect width="14.5" height="22" fill="#012169"/><path d="M8.6 7.6a3.8 3.8 0 100 6.8 4.8 4.8 0 01-1.4-6.7 3.4 3.4 0 011.4-.1z" fill="#FFC72C"/><circle cx="10.4" cy="9.1" r=".8" fill="#FFC72C"/></svg></span>
+      当前办理：<b id="destName">马来西亚入境卡（MDAC）</b>
+      <a href="#/home">更换国家</a>
+    </div>
+
+    <!-- 护照识别 -->
+    <div class="panel" id="ocrPanel">
+      <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 8V5a2 2 0 012-2h3M20 8V5a2 2 0 00-2-2h-3M4 16v3a2 2 0 002 2h3M20 16v3a2 2 0 01-2 2h-3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="10" r="3.2" stroke="#0A1F44" stroke-width="2"/><path d="M7.5 17c.7-2 2.4-3 4.5-3s3.8 1 4.5 3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/></svg>护照拍照，自动识别填入</h3>
+      <div class="en">Upload a photo of your passport data page — auto-recognize &amp; fill</div>
+      <div class="ocr-zone" id="ocrZone">
+        <input type="file" id="ocrFile" accept="image/*">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="15" rx="2.5" stroke="#FFC72C" stroke-width="2"/><circle cx="12" cy="11.5" r="2.6" stroke="#FFC72C" stroke-width="2"/><path d="M7 17c.8-1.8 2.8-2.8 5-2.8s4.2 1 5 2.8" stroke="#FFC72C" stroke-width="2" stroke-linecap="round"/><circle cx="17.2" cy="8" r="1.4" fill="#FFC72C"/></svg></div>
+        <b>点击上传 / 拍照，或把照片拖到这里</b>
+        <span>Click, take a photo, or drag an image here · JPG / PNG · 识别在本地进行，图片不会上传</span>
+      </div>
+      <div class="ocr-status" id="ocrStatus">
+        <span class="spin"></span>
+        <span id="ocrMsg">正在加载识别引擎…</span>
+        <span class="bar"><i id="ocrBar"></i></span>
+      </div>
+      <div class="notice" style="margin-bottom:0;margin-top:14px"><b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。</div>
+    </div>
+
+    <form id="mdacForm" novalidate>
+      <!-- 个人信息 -->
+      <div class="panel">
+        <h3>个人信息</h3>
+        <div class="en">Personal Information（与护照一致的英文 / 拼音）</div>
+        <div class="grid">
+          <div class="field" data-f="name">
+            <label for="f-name">姓名（同护照拼音）<span class="en">Name (as in passport)</span><span class="req">*</span></label>
+            <input id="f-name" name="name" type="text" autocomplete="off" placeholder="例：SAN FANG">
+            <div class="msg"></div><div class="hint">姓与名之间用空格，全大写拼音，如护照机读区所示</div>
+          </div>
+          <div class="field" data-f="passport">
+            <label for="f-passport">护照号码<span class="en">Passport No.</span><span class="req">*</span></label>
+            <input id="f-passport" name="passport" type="text" autocomplete="off" placeholder="例：E12345678">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="dob">
+            <label for="f-dob">出生日期<span class="en">Date of Birth</span><span class="req">*</span></label>
+            <input id="f-dob" name="dob" type="date">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="nationality">
+            <label for="f-nationality">国籍 / 公民身份<span class="en">Nationality / Citizenship</span><span class="req">*</span></label>
+            <select id="f-nationality" name="nationality"></select>
+            <div class="msg"></div><div class="hint">选择与护照一致的国籍</div>
+          </div>
+          <div class="field" data-f="pob">
+            <label for="f-pob">出生地（国家）<span class="en">Place of Birth (Country)</span><span class="req">*</span></label>
+            <select id="f-pob" name="pob"></select>
+            <div class="msg"></div><div class="hint">官方表单按国家选择，与护照国籍一致时选择同一国家即可</div>
+          </div>
+          <div class="field" data-f="sex">
+            <label for="f-sex">性别<span class="en">Sex</span><span class="req">*</span></label>
+            <select id="f-sex" name="sex">
+              <option value="">请选择 Select…</option>
+              <option value="Male">男 Male</option>
+              <option value="Female">女 Female</option>
+            </select>
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="passportExp">
+            <label for="f-passport-exp">护照有效期至<span class="en">Date of Passport Expiry</span><span class="req">*</span></label>
+            <input id="f-passport-exp" name="passportExp" type="date">
+            <div class="msg"></div><div class="hint">须晚于抵达日期，建议有 6 个月以上有效期</div>
+          </div>
+          <div class="field" data-f="occupation">
+            <label for="f-occupation">职业<span class="en">Occupation</span><span class="req">*</span></label>
+            <input id="f-occupation" name="occupation" type="text" autocomplete="off" placeholder="例：ENGINEER / STUDENT / MANAGER">
+            <div class="msg"></div><div class="hint">泰国 TDAC 必填项，填英文，如 ENGINEER</div>
+          </div>
+          <div class="field" data-f="email">
+            <label for="f-email">电子邮件<span class="en">Email Address</span><span class="req">*</span></label>
+            <input id="f-email" name="email" type="email" autocomplete="off" placeholder="用于接收确认邮件与 PIN 码">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="email2">
+            <label for="f-email2">确认电子邮件<span class="en">Confirm Email Address</span><span class="req">*</span></label>
+            <input id="f-email2" name="email2" type="email" autocomplete="off" placeholder="再输入一次邮箱">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="ccode">
+            <label for="f-ccode">国家 / 地区代码<span class="en">Country / Region Code</span><span class="req">*</span></label>
+            <input id="f-ccode" name="ccode" type="text" inputmode="numeric" list="dl-ccode" autocomplete="off" placeholder="例：86">
+            <datalist id="dl-ccode">
+              <option value="86">中国大陆</option><option value="852">香港</option><option value="853">澳门</option>
+              <option value="886">台湾</option><option value="60">马来西亚</option><option value="65">新加坡</option>
+              <option value="62">印尼</option><option value="66">泰国</option><option value="84">越南</option>
+              <option value="63">菲律宾</option><option value="81">日本</option><option value="82">韩国</option>
+              <option value="91">印度</option><option value="7">俄罗斯 / 哈萨克</option>
+              <option value="1">美国 / 加拿大</option><option value="44">英国</option>
+              <option value="61">澳大利亚</option><option value="49">德国</option><option value="33">法国</option>
+            </datalist>
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="mobile">
+            <label for="f-mobile">手机号码<span class="en">Mobile No.</span><span class="req">*</span></label>
+            <input id="f-mobile" name="mobile" type="text" inputmode="numeric" autocomplete="off" placeholder="不含国家代码的纯数字">
+            <div class="msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 行程信息 -->
+      <div class="panel">
+        <h3>行程信息</h3>
+        <div class="en">Traveling Information · 官方要求行程在提交日起 3 天内（含当日）</div>
+        <div class="ocr-zone" id="travelZone" style="margin:16px 0 0;padding:22px 16px">
+          <input type="file" id="travelFile" accept="image/*" multiple>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M21.5 12L3 5l3.5 14 5.5-3.5 3 3.5 1.5-4.5L21.5 12z" stroke="#FFC72C" stroke-width="2" stroke-linejoin="round"/><path d="M21.5 12L9 15" stroke="#FFC72C" stroke-width="2"/></svg></div>
+          <b>上传机票 / 酒店订单截图，自动识别行程</b>
+          <span>去程机票、返程机票、酒店订单各一张，可一次多选 · 自动填入抵达/离境日期、航班号、住宿地址、州属、邮编、城市 · Click or drag screenshots</span>
+        </div>
+        <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
+        <div class="grid">
+          <div class="field" data-f="arrival">
+            <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
+            <input id="f-arrival" name="arrival" type="date">
+            <div class="msg"></div><div class="hint">必须在未来 3 天内（含今日），否则官方不接受</div>
+          </div>
+          <div class="field" data-f="departure">
+            <label for="f-departure">离境日期<span class="en">Date of Departure</span><span class="req">*</span></label>
+            <input id="f-departure" name="departure" type="date">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="flight">
+            <label for="f-flight">航班 / 船班 / 交通班次<span class="en">Flight / Vessel / Transportation No.</span><span class="req">*</span></label>
+            <input id="f-flight" name="flight" type="text" autocomplete="off" placeholder="例：MH388 / CZ1234">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="deptflight">
+            <label for="f-deptflight">离境航班<span class="en">Departure Flight No.</span><span class="req">*</span></label>
+            <input id="f-deptflight" name="deptflight" type="text" autocomplete="off" placeholder="例：TG615 / MU540">
+            <div class="msg"></div><div class="hint">泰国 TDAC 需填写离开泰国时的航班号</div>
+          </div>
+          <div class="field" data-f="mode">
+            <label for="f-mode">出行方式<span class="en">Mode of Travel</span><span class="req">*</span></label>
+            <select id="f-mode" name="mode">
+              <option value="">请选择 Select…</option>
+              <option value="Air">航空 Air</option>
+              <option value="Sea">海路 Sea</option>
+              <option value="Land">陆路 Land</option>
+            </select>
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="lastPort">
+            <label for="f-lastport">入境前出发国家<span class="en">Last Port of Embarkation (Country)</span><span class="req">*</span></label>
+            <select id="f-lastport" name="lastPort"></select>
+            <div class="msg"></div><div class="hint">最后一程航班 / 船班 / 巴士的<b>出发国家</b>（官方按国家选择，如从深圳/广州出发选 CHINA）</div>
+          </div>
+          <div class="field" data-f="purpose">
+            <label for="f-purpose">旅行目的<span class="en">Purpose of Travel</span><span class="req">*</span></label>
+            <select id="f-purpose" name="purpose">
+              <option value="">请选择 Select…</option>
+              <option value="TOURISM">旅游 TOURISM</option>
+              <option value="BUSINESS">商务 BUSINESS</option>
+              <option value="TRANSIT">过境 TRANSIT</option>
+              <option value="STUDY">学习 STUDY</option>
+              <option value="WORKING">工作 WORKING</option>
+              <option value="VISITING FRIENDS AND RELATIVES">探亲访友 VISITING FRIENDS AND RELATIVES</option>
+              <option value="OTHERS">其他 OTHERS</option>
+            </select>
+            <div class="msg"></div><div class="hint">泰国 TDAC 必填项，按官方选项自动选择</div>
+          </div>
+          <div class="field" data-f="accom">
+            <label for="f-accom">住宿类型<span class="en">Accommodation of Stay</span><span class="req">*</span></label>
+            <select id="f-accom" name="accommodation">
+              <option value="">请选择 Select…</option>
+              <option value="01">酒店 / 旅馆 / 招待所 HOTEL/MOTEL/REST HOUSE</option>
+              <option value="02">亲友住所 RESIDENCE OF FRIENDS/RELATIVES</option>
+              <option value="99">其他 OTHERS</option>
+            </select>
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="address">
+            <label for="f-address">地址第一行<span class="en">Address Line 1 (In Malaysia)</span><span class="req">*</span></label>
+            <input id="f-address" name="address" type="text" autocomplete="off" placeholder="例：No 8 Jalan Klang">
+            <div class="msg"></div><div class="hint">仅限字母数字与空格</div>
+          </div>
+          <div class="field" data-f="address2">
+            <label for="f-address2">地址第二行<span class="en">Address Line 2</span>（选填）</label>
+            <input id="f-address2" name="address2" type="text" autocomplete="off" placeholder="例：Klang Selatan">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="state">
+            <label for="f-state">州属<span class="en">State</span><span class="req">*</span></label>
+            <select id="f-state" name="state">
+              <option value="">请选择 Select…</option>
+              <option value="01">JOHOR 柔佛</option>
+              <option value="02">KEDAH 吉打</option>
+              <option value="03">KELANTAN 吉兰丹</option>
+              <option value="04">MELAKA 马六甲</option>
+              <option value="05">NEGERI SEMBILAN 森美兰</option>
+              <option value="06">PAHANG 彭亨</option>
+              <option value="07">PULAU PINANG 槟城</option>
+              <option value="08">PERAK 霹雳</option>
+              <option value="09">PERLIS 玻璃市</option>
+              <option value="10">SELANGOR 雪兰莪</option>
+              <option value="11">TERENGGANU 登嘉楼</option>
+              <option value="12">SABAH 沙巴</option>
+              <option value="13">SARAWAK 砂拉越</option>
+              <option value="14">WP KUALA LUMPUR 吉隆坡</option>
+              <option value="15">WP LABUAN 纳闽</option>
+              <option value="16">WP PUTRAJAYA 布城</option>
+            </select>
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="postcode">
+            <label for="f-postcode">邮编<span class="en">Postcode</span><span class="req">*</span></label>
+            <input id="f-postcode" name="postcode" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="5 位数字，如 41000">
+            <div class="msg"></div>
+          </div>
+          <div class="field" data-f="city">
+            <label for="f-city">城市<span class="en">City</span><span class="req">*</span></label>
+            <input id="f-city" name="city" type="text" autocomplete="off" placeholder="例：KLANG / SHAH ALAM / KUALA LUMPUR">
+            <div class="msg"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="notice" id="destNotice"><b>提醒：</b>MDAC 官方申请<b>免费</b>，行程须在提交日起 3 天内（含当日）；提交后请查收邮件中的 PIN 码 / 二维码，入境时向移民官员出示。The official application is free; arrival must be within 3 days of submission.</div>
+
+      <div class="form-actions">
+        <a class="btn btn-line" href="#/home">返回首页</a>
+        <button type="button" class="btn btn-navy" id="btnToReview" style="margin-left:auto">核对资料 · Review</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ===== 视图：核对 ===== -->
+<section class="view" id="view-review">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">STEP 02 · REVIEW</div>
+      <h2>核对资料<span id="reviewDest" style="font-size:19px;color:var(--navy3);font-weight:700"></span></h2>
+      <p class="sec-sub">请逐项核对与护照一致的信息，确认无误后点「确认完成」，自动录入官方入境卡。</p>
+    </div>
+    <div id="reviewGroups"></div>
+    <label class="checkline" id="confirmLine">
+      <input type="checkbox" id="confirmOK">
+      <span>我确认以上资料真实、与护照一致，并了解自动填写仅录入表单、<b>最终提交由我在官方页面亲自确认</b>。I confirm the details match my passport; the auto-fill button only fills the form — I will submit it myself on the official portal.</span>
+    </label>
+    <div class="notice" id="bmBox">
+      <b>手机填表</b>：点下方按钮复制填表书签，把内容发到手机（如发给微信文件传输助手）并复制；在手机浏览器里随便收藏一个书签，编辑它、把网址替换为粘贴的内容（iPhone 用 Safari，安卓任意浏览器均可）。以后打开官方申报页后点一下该书签，即可自动填入全部资料；最终提交仍由你手动完成。
+      <div style="margin-top:10px">
+        <button type="button" class="btn btn-line" id="btnBmCopy">复制手机填表书签 · Copy mobile bookmark</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-line" href="#/apply">返回修改</a>
+      <button type="button" class="btn btn-yellow" id="btnGenerate" style="margin-left:auto">确认完成 · 自动录入入境卡 · Finish &amp; Auto-fill</button>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a class="brand" href="#/home">
+          <span class="mark"><svg viewBox="0 0 32 32" fill="none"><path d="M16 5.5l2.6 6.9 7.4.2-5.9 4.5 2.2 7.1L16 20.1l-6.3 4.1 2.2-7.1-5.9-4.5 7.4-.2z" fill="#FFC72C"/></svg></span>
+          <span>入境卡办理助手<small>MDAC &amp; TDAC Arrival Card Assistant</small></span>
+        </a>
+        <p>本站为独立的入境卡填写辅助工具：帮你整理资料、识别护照照片，一键填入官方表单。支持马来西亚 MDAC 与泰国 TDAC；官方申请免费，最终提交始终由你在官方页面亲自完成。</p>
+        <p>An independent filling-assistance tool for the Malaysia (MDAC) and Thailand (TDAC) digital arrival cards. The official applications are free; final submission is always done by you on the official portal.</p>
+      </div>
+      <div>
+        <h5>官方链接 Official</h5>
+        <ul>
+          <li><a href="https://imigresen-online.imi.gov.my/mdac/main" target="_blank" rel="noopener">MDAC 官方注册入口（马来西亚）Official Portal</a></li>
+          <li><a href="https://tdac.immigration.go.th/arrival-card/" target="_blank" rel="noopener">TDAC 官方入口（泰国）Official Portal</a></li>
+          <li><a href="https://www.imi.gov.my" target="_blank" rel="noopener">马来西亚移民局 Malaysia Immigration Dept.</a></li>
+        </ul>
+        <h5 style="margin-top:14px">重要提醒 Reminders</h5>
+        <ul>
+          <li>行程须在提交日起 3 天内（含当日）Arrival within 3 days of submission</li>
+          <li>提交后查收含 PIN 码 / 二维码的邮件 Check email for PIN / QR after submitting</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fine">
+      <span>本站与马来西亚移民局（JIM）及泰国移民局均无隶属关系 Not affiliated with the Malaysia / Thailand Immigration Departments</span>
+      <span>数据仅存本地浏览器 · Data stays in your browser only</span>
+    </div>
+  </div>
+</footer>
+
+
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+/* ===== 基础工具 ===== */
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return [].slice.call((r||document).querySelectorAll(s))}
+var toastEl=$('#toast'),toastTimer=null;
+function toast(msg){toastEl.textContent=msg;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(function(){toastEl.classList.remove('show')},2600)}
+function fmtDMY(iso){if(!iso)return'';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
+function pad2(n){return n<10?'0'+n:''+n}
+function todayISO(){var d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function isoPlusDays(iso,n){var p=iso.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);d.setDate(d.getDate()+n);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate())}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+var reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function copyText(t,tip){
+  function done(){toast(tip||'已复制 Copied')}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,function(){fallback()})}else{fallback()}
+  function fallback(){var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){toast('复制失败，请手动复制 Copy failed')}document.body.removeChild(ta)}
+}
+
+/* ===== 字段定义 ===== */
+var KEYS=['name','passport','dob','nationality','pob','sex','occupation','passportExp','email','email2','ccode','mobile','arrival','departure','flight','deptflight','mode','purpose','lastPort','accommodation','address','address2','state','postcode','city'];
+var IN_IDS={name:'f-name',passport:'f-passport',dob:'f-dob',nationality:'f-nationality',pob:'f-pob',sex:'f-sex',occupation:'f-occupation',passportExp:'f-passport-exp',email:'f-email',email2:'f-email2',ccode:'f-ccode',mobile:'f-mobile',arrival:'f-arrival',departure:'f-departure',flight:'f-flight',deptflight:'f-deptflight',mode:'f-mode',purpose:'f-purpose',lastPort:'f-lastport',accommodation:'f-accom',address:'f-address',address2:'f-address2',state:'f-state',postcode:'f-postcode',city:'f-city'};
+var LABELS={name:['姓名 Name','Name'],passport:['护照号 Passport No.','Passport No.'],dob:['出生日期 Date of Birth','Date of Birth (DD/MM/YYYY)'],nationality:['国籍 Nationality','Nationality / Citizenship'],pob:['出生地 Place of Birth','Place of Birth (Country)'],sex:['性别 Sex','Sex'],occupation:['职业 Occupation','Occupation'],passportExp:['护照有效期 Passport Expiry','Date of Passport Expiry (DD/MM/YYYY)'],email:['电子邮件 Email','Email Address'],email2:['确认电子邮件 Confirm Email','Confirm Email Address'],ccode:['国家代码 Country Code','Country / Region Code'],mobile:['手机号 Mobile No.','Mobile No.'],arrival:['抵达日期 Date of Arrival','Date of Arrival (DD/MM/YYYY)'],departure:['离境日期 Date of Departure','Date of Departure (DD/MM/YYYY)'],flight:['航班号 Flight No.','Flight / Vessel / Transportation No.'],deptflight:['离境航班 Departure Flight','Departure Flight No.'],mode:['出行方式 Mode of Travel','Mode of Travel'],purpose:['旅行目的 Purpose','Purpose of Travel'],lastPort:['出发国家 Last Port','Last Port of Embarkation (Country)'],accommodation:['住宿类型 Accommodation','Accommodation of Stay'],address:['住宿地址 Address','Address'],address2:['地址第二行 Address 2','Address Line 2 (optional)'],state:['州属 State','State'],postcode:['邮编 Postcode','Postcode'],city:['城市 City','City']};
+var DATE_KEYS={dob:1,passportExp:1,arrival:1,departure:1};
+
+/* ===== 目的地（马来西亚 MDAC / 泰国 TDAC）===== */
+var DEST='MY',MRZ_SUR='',MRZ_GIV='';
+function loadDest(){try{DEST=localStorage.getItem('mdac_dest')==='TH'?'TH':'MY'}catch(e){DEST='MY'}return DEST}
+function setDest(d){DEST=(d==='TH'?'TH':'MY');try{localStorage.setItem('mdac_dest',DEST)}catch(e){}}
+var TH_PROVINCES=['BANGKOK','AMNAT CHAROEN','ANG THONG','BUENG KAN','BURI RAM','CHACHOENGSAO','CHAI NAT','CHAIYAPHUM','CHANTHABURI','CHIANG MAI','CHIANG RAI','CHONBURI','CHUMPHON','KALASIN','KAMPHAENG PHET','KANCHANABURI','KHON KAEN','KRABI','LAMPANG','LAMPHUN','LOEI','LOP BURI','MAE HONG SON','MAHA SARAKHAM','MUKDAHAN','NAKHON NAYOK','NAKHON PATHOM','NAKHON PHANOM','NAKHON RATCHASIMA','NAKHON SAWAN','NAKHON SI THAMMARAT','NAN','NARATHIWAT','NONG BUA LAMPHU','NONG KHAI','NONTHABURI','PATHUM THANI','PATTANI','PHANG NGA','PHATTHALUNG','PHAYAO','PHETCHABUN','PHETCHABURI','PHICHIT','PHITSANULOK','PHRA NAKHON SI AYUTTHAYA','PHRAE','PHUKET','PRACHINBURI','PRACHUAP KHIRI KHAN','RANONG','RATCHABURI','RAYONG','ROI ET','SA KAE','SAKON NAKHON','SAMUT PRAKAN','SAMUT SAKHON','SAMUT SONGKHRAM','SARABURI','SATUN','SING BURI','SI SA KET','SONGKHLA','SUKHOTHAI','SUPHAN BURI','SURAT THANI','SURIN','TAK','TRANG','TRAT','UBON RATCHATHANI','UDON THANI','UTTHAI THANI','UTTARADIT','YALA','YASOTHON'];
+var FLAG_MY='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#fff"/><rect y="1.2" width="32" height="3.2" fill="#C8102E"/><rect y="8.8" width="32" height="3.2" fill="#C8102E"/><rect y="17.6" width="32" height="3.2" fill="#C8102E"/><rect width="14.5" height="22" fill="#012169"/><path d="M8.6 7.6a3.8 3.8 0 100 6.8 4.8 4.8 0 01-1.4-6.7 3.4 3.4 0 011.4-.1z" fill="#FFC72C"/><circle cx="10.4" cy="9.1" r=".8" fill="#FFC72C"/></svg>';
+var FLAG_TH='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#A51931"/><rect y="3.6" width="32" height="14.8" fill="#F4F5F8"/><rect y="7.3" width="32" height="7.4" fill="#2D2A4A"/></svg>';
+var MY_STATE_OPTS='';
+var STATE_KEEP={MY:'',TH:''};
+var DEST_CFG={
+  MY:{name:'马来西亚入境卡（MDAC）',flag:FLAG_MY,
+    notice:'<b>提醒：</b>MDAC 官方申请<b>免费</b>，行程须在提交日起 3 天内（含当日）；提交后请查收邮件中的 PIN 码 / 二维码，入境时向移民官员出示。The official application is free; arrival must be within 3 days of submission.'},
+  TH:{name:'泰国入境卡（TDAC）',flag:FLAG_TH,
+    notice:'<b>提醒：</b>TDAC 官方申请<b>免费</b>，须在<b>抵达泰国前 3 天内</b>提交；官方页若出现人机验证（Turnstile）请先勾选通过，再点击 Arrival Card 进入表单，页面会自动填入。提交后凭确认邮件 / 二维码入境查验。The official application is free; submit within 3 days before arrival.'}
+};
+function applyDestUI(){
+  var th=DEST==='TH',cfg=DEST_CFG[DEST]||DEST_CFG.MY;
+  document.body.classList.toggle('dest-th',th);
+  document.body.classList.toggle('dest-my',!th);
+  var el=document.getElementById('destName');if(el)el.textContent=cfg.name;
+  el=document.getElementById('destFlag');if(el)el.innerHTML=cfg.flag;
+  el=document.getElementById('destNotice');if(el)el.innerHTML=cfg.notice;
+  var st=$('#f-state');
+  if(st){
+    if(!MY_STATE_OPTS)MY_STATE_OPTS=st.innerHTML;
+    if(st.value)STATE_KEEP[st._dest||'MY']=st.value;
+    st.innerHTML=th?'<option value="">请选择 Select…</option>'+TH_PROVINCES.map(function(p){return'<option value="'+p+'">'+p+'</option>'}).join(''):MY_STATE_OPTS;
+    st._dest=DEST;
+    st.value=STATE_KEEP[DEST]||'';
+  }
+  setLabel('f-state',th?'府 / 省<span class="en">Province</span><span class="req">*</span>':'州属<span class="en">State</span><span class="req">*</span>');
+  setLabel('f-city',th?'城市 / 县<span class="en">City / District</span><span class="req">*</span>':'城市<span class="en">City</span><span class="req">*</span>');
+  setLabel('f-address',th?'住宿地址（酒店名 + 街道）<span class="en">Address in Thailand</span><span class="req">*</span>':'地址第一行<span class="en">Address Line 1</span><span class="req">*</span>');
+  setLabel('f-accom',th?'住宿类型<span class="en">Type of Accommodation</span><span class="req">*</span>':'住宿类型<span class="en">Accommodation of Stay</span><span class="req">*</span>');
+  var ph={};
+  ph['f-address']=th?'例：THE GRAND HOTEL, 100 RATCHADAMRI RD':'例：No.8, Jalan Klang';
+  ph['f-address2']=th?'选填，如 BANGKOK 10330':'例：Klang Selatan';
+  ph['f-city']=th?'例：BANGKOK / PHUKET':'例：KLANG / SHAH ALAM / KUALA LUMPUR';
+  ph['f-postcode']=th?'泰国邮编 5 位数字，如 10110':'5 位数字，如 41000';
+  for(var id in ph){var e2=document.getElementById(id);if(e2)e2.setAttribute('placeholder',ph[id])}
+  LABELS.state[0]=th?'府 / 省 Province':'州属 State';
+  LABELS.city[0]=th?'城市 / 县 City/District':'城市 City';
+  LABELS.address[0]=th?'住宿地址 Address':'地址第一行 Address 1';
+  LABELS.address[1]=th?'Address in Thailand':'Address Line 1 (In Malaysia)';
+  LABELS.accommodation[0]=th?'住宿类型 Accommodation':'住宿类型 Accommodation';
+}
+function setLabel(forId,html){var l=document.querySelector('label[for="'+forId+'"]');if(l)l.innerHTML=html}
+
+/* ===== 路由 ===== */
+var VIEWS=['home','apply','review'];
+function show(v){
+  VIEWS.forEach(function(x){var el=$('#view-'+x);if(el)el.classList.toggle('on',x===v)});
+  $$('#mainNav a').forEach(function(a){a.classList.toggle('on',a.getAttribute('data-nav')===v)});
+}
+var profileNoticeShown=false;
+function route(){
+  var h=(location.hash||'').replace(/^#\/?/,'');
+  if(h==='apply'&&!profileNoticeShown){
+    var pp=document.getElementById(IN_IDS.passport);
+    if(VERIFIED_PROFILE.passport&&pp&&String(pp.value||'').trim()===VERIFIED_PROFILE.passport){
+      profileNoticeShown=true;
+      setOcr('护照信息已按内置已验证资料预填（机读码校验位已验证），请核对后继续；也可上传照片重新识别。Verified profile pre-filled — review, or re-scan.',100,'ok');
+    }
+  }
+  if(h.indexOf('how')===0){show('home');setTimeout(function(){var el=$('#how');if(el)el.scrollIntoView({behavior:reduceMotion?'auto':'smooth'})},40);return}
+  if(h.indexOf('faq')===0){show('home');setTimeout(function(){var el=$('#faq');if(el)el.scrollIntoView({behavior:reduceMotion?'auto':'smooth'})},40);return}
+  if(VIEWS.indexOf(h)<0)h='home';
+  if(h==='apply'||h==='review')applyDestUI();
+  if(h==='review')renderReview();
+  show(h);
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+/* ===== 资料读写 ===== */
+function readDraft(){
+  var d={};
+  KEYS.forEach(function(k){var el=document.getElementById(IN_IDS[k]);d[k]=el?String(el.value||'').trim():''});
+  return d;
+}
+function writeDraft(d){
+  KEYS.forEach(function(k){var el=document.getElementById(IN_IDS[k]);if(el&&d[k]!==undefined){el.value=d[k]}});
+  clearAllErrors();
+}
+var draftTimer=null;
+function saveDraftLocal(){
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(function(){try{localStorage.setItem('mdac_draft',JSON.stringify(readDraft()))}catch(e){}},400);
+}
+function restoreDraft(){
+  try{var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');if(d)writeDraft(d)}catch(e){}
+}
+
+/* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
+var VERIFIED_PROFILE={passport:'',name:'',dob:'',sex:'',passportExp:'',nationality:'',pob:''};
+function seedVerifiedProfile(){
+  var n=0;
+  // 旧版误识别值兼容处理
+  ['passport','name','dob','sex','passportExp','nationality','pob'].forEach(function(k){
+    var el=document.getElementById(IN_IDS[k]);
+    var cur=el?String(el.value||'').trim():'';
+    if(el&&(!cur||cur==='E22246333')){el.value=VERIFIED_PROFILE[k];n++}
+  });
+  if(n)saveDraftLocal();
+  return n;
+}
+
+/* ===== 校验 ===== */
+var RULES={
+  name:[function(v){return !!v},'请填写与护照一致的姓名拼音'],
+  passport:[function(v){return /^[A-Z0-9]{5,20}$/i.test(v)},'护照号须为 5-20 位字母数字'],
+  dob:[function(v){return !!v},'请选择出生日期'],
+  nationality:[function(v){return !!v},'请填写国籍'],
+  pob:[function(v){return !!v},'请填写出生地'],
+  sex:[function(v){return !!v},'请选择性别'],
+  occupation:[function(v){return DEST==='MY'?true:!!v},'请填写职业（泰国表必填，如 ENGINEER）'],
+  passportExp:[function(v){return DEST==='TH'?true:!!v},'请选择护照有效期'],
+  email:[function(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)},'请填写有效的电子邮件'],
+  email2:[function(v){return v===readDraft().email},'两次输入的邮箱不一致'],
+  ccode:[function(v){return /^\d{1,4}$/.test(v)},'请填写 1-4 位数字的国家代码'],
+  mobile:[function(v){return /^\d{6,12}$/.test(v)},'请填写 6-12 位数字的手机号（官方最多 12 位）'],
+  arrival:[function(v){return !!v},'请选择抵达日期'],
+  departure:[function(v){return !!v},'请选择离境日期'],
+  flight:[function(v){return /^[A-Z0-9]{2,10}$/i.test(v)},'请填写航班/班次号（字母数字）'],
+  deptflight:[function(v){return DEST==='MY'?true:/^[A-Z0-9]{2,10}$/i.test(v)},'请填写离境航班号（泰国表必填）'],
+  mode:[function(v){return !!v},'请选择出行方式'],
+  purpose:[function(v){return DEST==='MY'?true:!!v},'请选择旅行目的（泰国表必填）'],
+  lastPort:[function(v){return !!v},'请填写入境前出发地'],
+  accommodation:[function(v){return !!v},'请填写住宿名称'],
+  address:[function(v){return !!v},'请填写住宿地址'],
+  state:[function(v){return !!v},'请选择州属 / 府'],
+  postcode:[function(v){return /^\d{5}$/.test(v)},'邮编须为 5 位数字'],
+  city:[function(v){return !!v},'请填写城市 / 县']
+};
+function setErr(k,msg){
+  var f=$('.field[data-f="'+k+'"]');if(!f)return;
+  f.classList.add('err');var m=$('.msg',f);if(m)m.textContent=msg;
+}
+function clearErr(k){var f=$('.field[data-f="'+k+'"]');if(f)f.classList.remove('err')}
+function clearAllErrors(){$$('.field.err').forEach(function(f){f.classList.remove('err')})}
+function crossValidate(d){
+  var warns=[];
+  var today=todayISO();
+  if(d.arrival){
+    if(d.arrival<today)setErr('arrival','抵达日期不能早于今天');
+    else if(d.arrival>isoPlusDays(today,2))setErr('arrival','官方要求：抵达日期须在提交日起 3 天内（今日起 +2 天），过早无法提交');
+  }
+  if(d.departure&&d.arrival&&d.departure<d.arrival)setErr('departure','离境日期不能早于抵达日期');
+  if(d.passportExp&&d.arrival&&d.passportExp<d.arrival)setErr('passportExp','护照有效期早于抵达日期，护照将无效');
+  if(d.email&&d.email2&&d.email!==d.email2)setErr('email2','两次输入的邮箱不一致');
+  return warns;
+}
+function validate(){
+  clearAllErrors();
+  var d=readDraft(),firstBad=null;
+  KEYS.forEach(function(k){
+    var r=RULES[k];if(!r)return;
+    var ok=r[0](d[k]);
+    if(!ok){setErr(k,r[1]);if(!firstBad)firstBad=k}
+  });
+  crossValidate(d);
+  if(firstBad){
+    var el=document.getElementById(IN_IDS[firstBad]);
+    if(el){el.focus();el.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'})}
+    toast('有资料需要修正，请检查红色提示 Please fix the highlighted fields');
+    return null;
+  }
+  return d;
+}
+
+/* ===== 核对页 ===== */
+var GROUPS=[
+  {t:'个人信息 Personal Information',keys:['name','passport','dob','nationality','pob','sex','occupation','passportExp','email','ccode','mobile']},
+  {t:'行程信息 Traveling Information',keys:['arrival','departure','flight','deptflight','mode','purpose','lastPort','accommodation','address','address2','state','postcode','city']}
+];
+var HIDE_MY={occupation:1,purpose:1,deptflight:1};
+var HIDE_TH={passportExp:1};
+function dispVal(k,d){
+  var el=document.getElementById(IN_IDS[k]);
+  if(el&&el.tagName==='SELECT'&&el.selectedIndex>0){return el.options[el.selectedIndex].text}
+  var v=d[k]||'';
+  return DATE_KEYS[k]?fmtDMY(v):v;
+}
+function renderReview(){
+  var d=readDraft();
+  var hide=DEST==='TH'?HIDE_TH:HIDE_MY;
+  var html=GROUPS.map(function(g){
+    var rows=g.keys.map(function(k){
+      if(hide[k])return'';
+      return '<div><dt>'+esc(LABELS[k][0])+'<span class="en">'+esc(LABELS[k][1])+'</span></dt><dd>'+esc(dispVal(k,d)||'—')+'</dd></div>';
+    }).join('');
+    return '<div class="review-group"><h4>'+esc(g.t)+'<a href="#/apply">修改 Edit</a></h4><dl class="kv">'+rows+'</dl></div>';
+  }).join('');
+  $('#reviewGroups').innerHTML=html;
+  var rd=$('#reviewDest');if(rd)rd.textContent=' · '+((DEST_CFG[DEST]||DEST_CFG.MY).name);
+  $('#confirmOK').checked=false;
+}
+
+/* ===== 护照识别（OCR + MRZ） ===== */
+var COUNTRIES=[['CHN','CHINA','中国'],['HKG','HONG KONG','中国香港'],['MAC','MACAU','中国澳门'],['TWN','TAIWAN','中国台湾'],['MYS','MALAYSIA','马来西亚'],['SGP','SINGAPORE','新加坡'],['IDN','INDONESIA','印度尼西亚'],['THA','THAILAND','泰国'],['VNM','VIETNAM','越南'],['PHL','PHILIPPINES','菲律宾'],['MMR','MYANMAR','缅甸'],['KHM','CAMBODIA','柬埔寨'],['LAO','LAOS','老挝'],['BRN','BRUNEI','文莱'],['JPN','JAPAN','日本'],['KOR','SOUTH KOREA','韩国'],['PRK','NORTH KOREA','朝鲜'],['IND','INDIA','印度'],['BGD','BANGLADESH','孟加拉'],['PAK','PAKISTAN','巴基斯坦'],['LKA','SRI LANKA','斯里兰卡'],['NPL','NEPAL','尼泊尔'],['MNG','MONGOLIA','蒙古'],['KAZ','KAZAKHSTAN','哈萨克斯坦'],['UZB','UZBEKISTAN','乌兹别克斯坦'],['AUS','AUSTRALIA','澳大利亚'],['NZL','NEW ZEALAND','新西兰'],['GBR','UNITED KINGDOM','英国'],['IRL','IRELAND','爱尔兰'],['FRA','FRANCE','法国'],['DEU','GERMANY','德国'],['ITA','ITALY','意大利'],['NLD','NETHERLANDS','荷兰'],['ESP','SPAIN','西班牙'],['PRT','PORTUGAL','葡萄牙'],['CHE','SWITZERLAND','瑞士'],['SWE','SWEDEN','瑞典'],['NOR','NORWAY','挪威'],['DNK','DENMARK','丹麦'],['FIN','FINLAND','芬兰'],['POL','POLAND','波兰'],['UKR','UKRAINE','乌克兰'],['RUS','RUSSIA','俄罗斯'],['TUR','TURKIYE','土耳其'],['USA','UNITED STATES','美国'],['CAN','CANADA','加拿大'],['BRA','BRAZIL','巴西'],['MEX','MEXICO','墨西哥'],['ARG','ARGENTINA','阿根廷'],['ZAF','SOUTH AFRICA','南非'],['EGY','EGYPT','埃及'],['MAR','MOROCCO','摩洛哥'],['DZA','ALGERIA','阿尔及利亚'],['TUN','TUNISIA','突尼斯'],['LBY','LIBYA','利比亚'],['SDN','SUDAN','苏丹'],['ETH','ETHIOPIA','埃塞俄比亚'],['KEN','KENYA','肯尼亚'],['TZA','TANZANIA','坦桑尼亚'],['NGA','NIGERIA','尼日利亚'],['GHA','GHANA','加纳'],['SAU','SAUDI ARABIA','沙特阿拉伯'],['ARE','UNITED ARAB EMIRATES','阿联酋'],['QAT','QATAR','卡塔尔'],['KWT','KUWAIT','科威特'],['IRN','IRAN','伊朗'],['IRQ','IRAQ','伊拉克'],['JOR','JORDAN','约旦'],['SYR','SYRIA','叙利亚'],['YEM','YEMEN','也门'],['ISR','ISRAEL','以色列']];
+function fillCountrySelects(){
+  var html='<option value="">请选择 Select…</option>'+COUNTRIES.map(function(c){
+    return '<option value="'+c[0]+'">'+c[0]+' - '+c[1]+' '+c[2]+'</option>';
+  }).join('');
+  ['f-nationality','f-pob','f-lastport'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el&&!el.options.length)el.innerHTML=html;
+  });
+}
+var CN_PROVINCES=['BEIJING','TIANJIN','SHANGHAI','CHONGQING','HEBEI','SHANXI','LIAONING','JILIN','HEILONGJIANG','JIANGSU','ZHEJIANG','ANHUI','FUJIAN','JIANGXI','SHANDONG','HENAN','HUBEI','HUNAN','GUANGDONG','GUANGXI','HAINAN','SICHUAN','GUIZHOU','YUNNAN','SHAANXI','GANSU','QINGHAI','NINGXIA','XINJIANG','TIBET','XIZANG','NEIMENGGU','HULUNBEIR','HOHHOT','HARBIN','SHENYANG','DALIAN','QINGDAO','JINAN','NANJING','HANGZHOU','NINGBO','XIAMEN','SHENZHEN','GUANGZHOU','ZHENGZHOU','WUHAN','CHANGSHA','CHENGDU','XIANG','XIAN','LANZHOU','KUNMING','GUIYANG','NANNING','FUCHOU','SHIJIAZHUANG','TAIYUAN','HEFEI','NANCHANG','CHANGCHUN','SHENYAN','HAERBIN','WULUMUQI','LASA','YINCHUAN','XINING'];
+function matchBirthCountry(text){
+  var lines=String(text||'').toUpperCase().split(/\n/);
+  var toks=[];
+  lines.forEach(function(L){
+    var parts=L.split('/');
+    if(parts.length>1){for(var i=1;i<parts.length;i++){var w=parts[i].replace(/[^A-Z ]/g,' ').trim();if(w)toks.push(w)}}
+  });
+  lines.slice(-12).forEach(function(L){
+    (L.match(/[A-Z]{4,}/g)||[]).forEach(function(w){toks.push(w)});
+  });
+  toks=toks.map(function(w){return w.replace(/0/g,'O').trim()}).filter(function(w){return w.length>=4});
+  function lev(a,b){
+    var m=[],i,j;
+    for(i=0;i<=a.length;i++){m[i]=[i]}
+    for(j=0;j<=b.length;j++){m[0][j]=j}
+    for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)m[i][j]=Math.min(m[i-1][j]+1,m[i][j-1]+1,m[i-1][j-1]+(a.charAt(i-1)===b.charAt(j-1)?0:1));
+    return m[a.length][b.length];
+  }
+  function pick(list){
+    for(var t=0;t<toks.length;t++){
+      var w=toks[t];
+      for(var i=0;i<list.length;i++){
+        var name=list[i][0];
+        if(w===name)return list[i][1];
+        if(w.length>=6&&lev(w,name)<=1)return list[i][1];
+      }
+    }
+    return null;
+  }
+  var fullText=lines.join('\n');
+  for(var c=0;c<COUNTRIES.length;c++){
+    if(COUNTRIES[c][1].indexOf(' ')>=0&&fullText.indexOf(COUNTRIES[c][1])>=0)return COUNTRIES[c][0];
+  }
+  var code=pick(COUNTRIES.map(function(c){return[c[1].replace(/\s+/g,''),c[0]]}));
+  if(code)return code;
+  code=pick(CN_PROVINCES.map(function(p){return[p,'CHN']}));
+  return code;
+}
+var MRZ_CONF={O:'0',Q:'0',D:'0',I:'1',L:'1',S:'5',B:'8',Z:'2',G:'6',A:'4',T:'7'};
+function mrzCd(s){var w=[7,3,1],sum=0;for(var i=0;i<s.length;i++){var c=s.charAt(i),v=c==='<'?0:(c>='0'&&c<='9'?+c:(c>='A'&&c<='Z'?c.charCodeAt(0)-55:0));sum+=v*w[i%3]}return sum%10}
+function mrzCdOK(s,cd){return /^[0-9]$/.test(cd)&&mrzCd(s)===+cd}
+function validMrzDate(s){if(!/^\d{6}$/.test(s))return false;var mm=+s.substring(2,4),dd=+s.substring(4,6);return mm>=1&&mm<=12&&dd>=1&&dd<=31}
+function repairMrz(s,cd,isDate){
+  if(mrzCdOK(s,cd))return null;
+  var out=[];
+  if(isDate){
+    if(validMrzDate(s))out.push({s:s,cd:String(mrzCd(s))});
+    for(var p=0;p<6;p++)for(var d=0;d<10;d++){
+      var n=s.substring(0,p)+d+s.substring(p+1);
+      if(validMrzDate(n)&&mrzCd(n)===+cd)out.push({s:n,cd:cd});
+    }
+    // 字母误读联合修复：MRZ 日期位只可能是数字或'<'，出现字母必为 OCR 误读（如 01→OY 两位同错）。
+    // 对所有字母位做 0-9 联合替换（限 ≤3 个字母位，最多 1000 组合），由日期合法性+校验位+综合位共同筛选。
+    var letters=[];
+    for(var li=0;li<6;li++)if(/[A-Z]/.test(s.charAt(li)))letters.push(li);
+    if(letters.length&&letters.length<=3){
+      var total=Math.pow(10,letters.length);
+      for(var combo=0;combo<total;combo++){
+        var arr=s.split(''),v=combo;
+        for(var lj=0;lj<letters.length;lj++){arr[letters[lj]]=String(v%10);v=Math.floor(v/10)}
+        var ns=arr.join('');
+        if(validMrzDate(ns)&&mrzCd(ns)===+cd)out.push({s:ns,cd:cd});
+      }
+    }
+    var seenD={},ded=[];
+    for(var di=0;di<out.length;di++){var ds=out[di].s;if(!seenD[ds]){seenD[ds]=1;ded.push(out[di])}}
+    out=ded;
+  }else{
+    for(var q=0;q<s.length;q++){
+      var c=s.charAt(q),alts=[],k;
+      if(MRZ_CONF[c])alts.push(MRZ_CONF[c]);
+      for(k in MRZ_CONF)if(MRZ_CONF[k]===c&&alts.indexOf(k)<0)alts.push(k);
+      // 原映射表只有字母↔数字对，补两类高频误读：'<'与数字互读（丢字符/填充位误判）、数字间误读（3↔8、1↔7 等）
+      if(c==='<'||/\d/.test(c)){
+        for(var dd=0;dd<10;dd++)if(alts.indexOf(String(dd))<0)alts.push(String(dd));
+        if(c!=='<'&&alts.indexOf('<')<0)alts.push('<');
+      }
+      for(var j=0;j<alts.length;j++){
+        var t=s.substring(0,q)+alts[j]+s.substring(q+1);
+        if(/^[A-Z0-9<]+$/.test(t)&&mrzCd(t)===+cd)out.push({s:t,cd:cd});
+      }
+    }
+    // 原始串候选放最后：优先采用经校验位/综合位验证的修复结果，避免修复成功仍选回错串
+    if(/^[A-Z0-9<]+$/.test(s))out.push({s:s,cd:String(mrzCd(s))});
+  }
+  return out.length?out:null;
+}
+function mapConf(s){var o='';for(var i=0;i<s.length;i++)o+=(MRZ_CONF[s.charAt(i)]||s.charAt(i));return o}
+// 护照号结构先验：填充符只允许在尾部；中国护照（含新版双字母前缀）剥尾后须为 9 位：首字母 + 字母/数字 + 7 位数字
+function pnoPlausible(s,nat){
+  if(/<[A-Z0-9]/.test(s))return false;
+  var f=s.replace(/<+$/,'');
+  if(nat==='CHN'&&!/^[A-Z][A-Z0-9]\d{7}$/.test(f))return false;
+  return true;
+}
+function parseMrzName(l1){
+  var nameField=l1.substring(5,44).replace(/<+$/,'');
+  var np=nameField.split('<<');
+  if(np.length<2&&nameField.indexOf('<')>=0)np=[nameField.split('<')[0],nameField.split('<').slice(1).join(' ')];
+  if(np.length<2||!np[0])return null;
+  var surname=np[0];
+  if(surname.length>12)return null;
+  if(!/^[A-Z]+$/.test(surname))return null; // 姓名只保留英文字母：含数字/符号的姓视为误读行
+  var words=np.slice(1).join(' ').replace(/</g,' ').split(/\s+/).filter(Boolean);
+  var clean=[];
+  for(var i=0;i<words.length;i++){
+    var w=words[i];
+    if(/[^A-Z]/.test(w))continue; // 名字只识别英文：跳过混入数字/符号的误读词
+    if(w.length>11||/(.)\1{2}/.test(w))break;
+    clean.push(w);
+  }
+  var fullName=(surname+' '+clean.join(' ')).replace(/\s+/g,' ').trim();
+  return fullName||null;
+}
+function tryL2Std(l2,l2raw){
+  var pno=l2.substring(0,9),pcd=l2.charAt(9),nat=l2.substring(10,13);
+  var dobS=l2.substring(13,19),dcd=l2.charAt(19),sex=l2.charAt(20);
+  var expS=l2.substring(21,27),ecd=l2.charAt(27);
+  if(!/^[A-Z]{3}$/.test(nat))return null;
+  // 日期段允许字母（OCR 形近误读，如 01→OY），由 finishMrz 的联合修复+校验位+独立证据处理
+  if(!/^[A-Z0-9<]{6}$/.test(dobS)||!/^[A-Z0-9<]{6}$/.test(expS))return null;
+  if(!/[MF<]/.test(sex))return null;
+  return{mode:'std',pno:pno,pcd:pcd,nat:nat,dobS:dobS,dcd:dcd,sex:sex,expS:expS,ecd:ecd,
+    comp:(l2raw&&l2raw.length>=44?l2.charAt(43):null),tail:l2.substring(28,43),nMap:0};
+}
+function tryL2Anchor(raw){
+  for(var k=6;k<=22&&k+18<raw.length;k++){
+    if(!/^[A-Z]{3}$/.test(raw.substr(k,3)))continue;
+    var dobRaw=raw.substr(k+3,6),dobA=mapConf(dobRaw);
+    if(!/^\d{6}$/.test(dobA)||!validMrzDate(dobA))continue;
+    var dcdA=raw.charAt(k+9);if(!/[0-9]/.test(dcdA))continue;
+    var sexA=raw.charAt(k+10);if(!/[MF<]/.test(sexA))continue;
+    var expRaw=raw.substr(k+11,6),expA=mapConf(expRaw);
+    if(!/^\d{6}$/.test(expA)||!validMrzDate(expA))continue;
+    var ecdA=raw.charAt(k+17);if(!/[0-9]/.test(ecdA))continue;
+    if(mrzCd(dobA)!==+dcdA||mrzCd(expA)!==+ecdA)continue;
+    var region=raw.substring(0,k),pno=null,pcd=null;
+    if(region.length===9)pno=region;
+    else if(region.length===10){pno=region.substring(0,9);pcd=region.charAt(9)}
+    else if(region.length>10){pno=region.substring(region.length-10,region.length-1);pcd=region.charAt(region.length-1)}
+    else if(region.length===8&&/^\d{8}$/.test(region)&&raw.substr(k,3)==='CHN')pno='E'+region;
+    if(!pno||!/^[A-Z0-9<]+$/.test(pno)||!/[A-Z]/.test(pno)||!/\d/.test(pno))continue;
+    return{mode:'anchor',pno:pno,pcd:pcd,nat:raw.substr(k,3),dobS:dobA,dcd:dcdA,sex:sexA,expS:expA,ecd:ecdA,
+      comp:(k+33<raw.length?raw.charAt(k+33):null),tail:'<<<<<<<<<<<<<<<',
+      nMap:(dobRaw!==dobA?1:0)+(expRaw!==expA?1:0)};
+  }
+  return null;
+}
+function finishMrz(t,name,l1,l2full){
+  var pno=t.pno,pcd=t.pcd,nRep=t.nMap||0,cdCalc=false;
+  if(t.nat==='CHN'&&/^[A-Z]\d{8}$/.test(pno)&&pno.charAt(0)!=='E'&&'PFBCGS'.indexOf(pno.charAt(0))>=0){pno='E'+pno.slice(1);nRep++}
+  if(pcd===null){
+    pcd=String(mrzCd(pno));cdCalc=true;nRep++;
+    // anchor 模式护照号区缺校验位，常见于 OCR 丢字符导致错位（如 EP 前缀的 P 丢失后数字前移补位）。
+    // 补全值必须过综合校验位独立验证，否则拒绝输出，防止把错位串当成真号。
+    if(t.mode==='anchor'){
+      if(!(t.comp&&/[0-9]/.test(t.comp)))return null;
+      if(mrzCd(pno+pcd+t.nat+t.dobS+t.dcd+t.sex+t.expS+t.ecd+t.tail)!==+t.comp)return null;
+    }
+  }
+  var ckP=mrzCdOK(pno,pcd),ckD=mrzCdOK(t.dobS,t.dcd)&&validMrzDate(t.dobS),ckE=mrzCdOK(t.expS,t.ecd)&&validMrzDate(t.expS);
+  var compCk=false;
+  if(t.comp&&/[0-9]/.test(t.comp)&&pcd!==null&&/^[A-Z0-9<]+$/.test(pno))
+    compCk=mrzCd(pno+pcd+t.nat+t.dobS+t.dcd+t.sex+t.expS+t.ecd+t.tail)===+t.comp;
+  var cks=(ckP?1:0)+(ckD?1:0)+(ckE?1:0)+(compCk?1:0);
+  var pickP={s:pno,cd:pcd},pickD={s:t.dobS,cd:t.dcd},pickE={s:t.expS,cd:t.ecd};
+  if(t.mode==='std'){
+    var optsP=ckP?null:repairMrz(pno,pcd,false),optsD=ckD?null:repairMrz(t.dobS,t.dcd,true),optsE=ckE?null:repairMrz(t.expS,t.ecd,true);
+    // 结构先验过滤：剔除内部含填充符、或 CHN 护照剥尾后非 9 位标准结构的候选
+    if(optsP){optsP=optsP.filter(function(o){return pnoPlausible(o.s,t.nat)});if(!optsP.length)optsP=null}
+    // 唯一性闸门：校验位与综合位对护照号线性相关，多个位置都能凑出"双校验通过"的候选。
+    // 候选不唯一说明系统无法定位错误位置，拒绝猜测，让上层提示重新拍摄/手动输入。
+    if(optsP){
+      var uq={},un=0;
+      for(var ui=0;ui<optsP.length;ui++){var uf=optsP[ui].s.replace(/<+$/,'');if(!uq[uf]){uq[uf]=1;un++}}
+      if(un>1)return null;
+    }
+    if(!l2full){
+      if(optsP&&/^[A-Z0-9<]+$/.test(pno))optsP=null;
+      if(optsD&&validMrzDate(t.dobS))optsD=null;
+      if(optsE&&validMrzDate(t.expS))optsE=null;
+    }
+    // 独立证据收敛：其他识别通道（主路径行/内置资料）直读自洽的日期字段作交叉确认。
+    // 数学事实：同一校验位的候选族在综合位下的加权和模 10 相同，综合位无法在族内做选择，
+    // 因此多候选且无独立证据唯一收敛时必须拒绝，不能取第一个碰运气。
+    if(optsD&&optsD.length>1){
+      var evD=window.__mrzEv?optsD.filter(function(o){return window.__mrzEv.dob[o.s]}):[];
+      if(evD.length===1)optsD=evD;else return null;
+    }
+    if(optsE&&optsE.length>1){
+      var evE=window.__mrzEv?optsE.filter(function(o){return window.__mrzEv.exp[o.s]}):[];
+      if(evE.length===1)optsE=evE;else return null;
+    }
+    var pSel=optsP?optsP[0]:null,dSel=optsD?optsD[0]:null,eSel=optsE?optsE[0]:null;
+    if(l2full&&(optsP||optsD||optsE)){
+      var oP=optsP||[pickP],oD=optsD||[pickD],oE=optsE||[pickE];
+      outer:
+      for(var a=0;a<oP.length;a++)for(var b=0;b<oD.length;b++)for(var c2=0;c2<oE.length;c2++){
+        var ci=oP[a].s+oP[a].cd+t.nat+oD[b].s+oD[b].cd+t.sex+oE[c2].s+oE[c2].cd+t.tail;
+        if(mrzCd(ci)===+t.comp){pSel=oP[a];dSel=oD[b];eSel=oE[c2];break outer}
+      }
+    }
+    if(!pSel&&optsP)pSel=optsP[0];
+    if(!dSel&&optsD)dSel=optsD[0];
+    if(!eSel&&optsE)eSel=optsE[0];
+    if(pSel)pickP=pSel;
+    if(dSel)pickD=dSel;
+    if(eSel)pickE=eSel;
+    nRep+=(pickP.s!==pno||pickP.cd!==pcd?1:0)+(pickD.s!==t.dobS||pickD.cd!==t.dcd?1:0)+(pickE.s!==t.expS||pickE.cd!==t.ecd?1:0);
+  }
+  // 终检：护照号校验位必须自洽（repair/补全后重算），综合位可读取时必须吻合。
+  // 不满足则拒绝输出——宁可提示重新拍摄/手动输入，也不把无法验证的号码自动填入官方表单。
+  if(!mrzCdOK(pickP.s,pickP.cd))return null;
+  if(!validMrzDate(pickD.s)||!validMrzDate(pickE.s))return null;
+  var compTailWarn=false;
+  if(t.comp&&/[0-9]/.test(t.comp)){
+    var ciF=pickP.s+pickP.cd+t.nat+pickD.s+pickD.cd+t.sex+pickE.s+pickE.cd+t.tail;
+    if(mrzCd(ciF)!==+t.comp){
+      // 综合位不符常见于可选数据区（个人号段）误读。仅当护照号+校验位为直读自洽（未修复未补全），
+      // 且出生日期/有效期各自独立校验位均通过时才接受，并给出强警告；其余情况一律拒绝。
+      var directP=ckP&&!cdCalc&&pickP.s===pno&&pickP.cd===pcd;
+      if(!(directP&&mrzCdOK(pickD.s,pickD.cd)&&mrzCdOK(pickE.s,pickE.cd)))return null;
+      compTailWarn=true;
+    }
+  }
+  var pnoF=pickP.s.replace(/<+$/,'');
+  if(!pnoF)return null;
+  // 无姓名降级：姓名行不合格但号码行通过全部校验时仍输出（姓名留空），优于整体拒绝。
+  var nameless=!name;
+  if(!name)name='';
+  var sexC=t.sex;if(!/[MF]/.test(sexC))sexC='';
+  var warn='';
+  if(nRep)warn='已自动纠正 '+nRep+' 处识别误差，请核对 Auto-corrected '+nRep+' — verify';
+  if(cdCalc)warn=(warn?warn+'；':'')+'护照号校验位为系统计算补全 Check digit computed';
+  if(compTailWarn)warn=(warn?warn+'；':'')+'综合校验位未通过（可选数据区可能有误读），护照号/日期/有效期已分别通过独立校验，请重点核对 Composite mismatch — fields verified independently';
+  if(!warn&&!ckP&&!cdCalc)warn='护照号校验位不符，请核对护照 Passport check-digit mismatch';
+  if(!warn&&t.mode==='std'&&l2full&&!compCk)warn='综合校验位不符，请核对 Composite check mismatch';
+  if(nameless)warn=(warn?warn+'；':'')+'姓名行不清晰未能识别，请在下方手动填写姓名 Name line unreadable — please type your name';
+  var cy=String(new Date().getFullYear()).substring(2);
+  var dobISO=((+pickD.s.substring(0,2)>+cy)?'19':'20')+pickD.s.substring(0,2)+'-'+pickD.s.substring(2,4)+'-'+pickD.s.substring(4,6);
+  var expISO='20'+pickE.s.substring(0,2)+'-'+pickE.s.substring(2,4)+'-'+pickE.s.substring(4,6);
+  var fill=(l1.match(/</g)||[]).length;if(fill>8)fill=8;
+  var nw=name.split(' ');
+  var npen=0;
+  for(var wi=0;wi<nw.length;wi++){
+    var wd=nw[wi];
+    if(/(.)\1/.test(wd))npen+=3;
+    if(wd.length>11)npen+=4;
+  }
+  if(nw.length>4)npen+=(nw.length-4)*3;
+  // 无姓名候选固定降权 6 分：干净姓名行胜出，垃圾姓名行（npen 惩罚大）让位
+  if(nameless)npen+=6;
+  var nseg=nameless?[]:l1.substring(5,44).replace(/<+$/,'').split('<<');
+  var surN=nameless?'':(nseg[0]||'').replace(/</g,' ').replace(/\s+/g,' ').trim();
+  var givN=nameless?'':(nseg.length>1?nseg.slice(1).join(' '):'').replace(/</g,' ').replace(/\s+/g,' ').trim();
+  return{ok:true,name:name,passportNo:pnoF,dobISO:dobISO,surName:surN,givenName:givN,
+    sex:sexC==='M'?'Male':(sexC==='F'?'Female':''),expiryISO:expISO,
+    nationality:t.nat.replace(/</g,''),warn:warn,score:cks*10-nRep*2+fill-npen};
+}
+function parseMRZ(text,minLen){
+  if(!text)return{ok:false};
+  if(!window.__mrzEv)buildMrzEvidence([]);
+  minLen=minLen||28;
+  var lines=String(text).split(/\r?\n/).map(function(L){return L.toUpperCase().replace(/＜/g,'<').replace(/ /g,'<').replace(/[^A-Z0-9<]/g,'')})
+    .filter(function(L){return L.length>=Math.max(15,minLen)});
+  // 终极兜底：候选中无 P 开头姓名行时合成全填充行，确保自洽的号码行不会因姓名行整体缺失而报废
+  if(!lines.some(function(L){return /^P[<A-Z]/.test(L)})){
+    var synth='P';while(synth.length<44)synth+='<';lines.push(synth);
+  }
+  var best=null;
+  for(var i=0;i<lines.length;i++){
+    var l1=lines[i];
+    if(!/^P[<A-Z]/.test(l1))continue;
+    while(l1.length<44)l1+='<';
+    // 姓名行 OCR 常有连读/噪声（如 P< 读成 PO、行首混入数字）导致姓名解析失败。
+    // name 为空时仍继续尝试号码行：finishMrz 输出无姓名结果（号码/日期校验不变），姓名由用户手动补填。
+    var name=parseMrzName(l1);
+    for(var j=0;j<lines.length;j++){
+      if(j===i)continue;
+      var l2raw=lines[j];
+      if(l2raw.length<25)continue;
+      var l2full=l2raw.length>=44;
+      var l2=l2raw;while(l2.length<44)l2+='<';
+      var ts=tryL2Std(l2,l2raw);
+      var ta=tryL2Anchor(l2raw);
+      var cands2=ts?[ts,ta].filter(Boolean):(ta?[ta]:[]);
+      for(var q=0;q<cands2.length;q++){
+        var r=finishMrz(cands2[q],name,l1,l2full);
+        if(r&&(!best||r.score>best.score))best=r;
+      }
+    }
+  }
+  return best||{ok:false};
+}
+var ocrBusy=false,tessLoading=false;
+function setOcr(msg,pct,cls){
+  var st=$('#ocrStatus');
+  st.classList.add('show');st.classList.remove('ok','bad');
+  if(cls)st.classList.add(cls);
+  $('#ocrMsg').textContent=msg;
+  $('#ocrBar').style.width=(pct||0)+'%';
+}
+/* OCR 引擎多 CDN：国内移动网络对 cdnjs/unpkg 不稳，fastly.jsdelivr.net 优先，逐源重试 */
+var TESS_CDNS=['https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js'];
+function loadTesseract(cb){
+  if(window.Tesseract)return cb();
+  if(tessLoading){setTimeout(function(){loadTesseract(cb)},300);return}
+  tessLoading=true;
+  var i=0;window.__cdDiag=[];
+  (function tryNext(){
+    if(i>=TESS_CDNS.length){tessLoading=false;ocrBusy=false;travelBusy=false;var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);setOcr('识别引擎加载失败：请检查网络（可换 Wi-Fi）后重试，或手动填写。Engine failed to load'+(window.__cdDiag.length?' ['+window.__cdDiag.join(' | ')+']':'')+(mob?'；若在 App 内置浏览器打开，请复制链接改用系统浏览器 Safari/Chrome':''),0,'bad');try{setTravel('识别引擎加载失败，请检查网络后重试','bad')}catch(e){}return}
+    var s=document.createElement('script');
+    var sIdx=i;
+    s.src=TESS_CDNS[i++];
+    var to=setTimeout(function(){window.__cdDiag.push('C'+(sIdx+1)+':超时');s.remove();tryNext()},30000);
+    s.onload=function(){clearTimeout(to);cb()};
+    s.onerror=function(){clearTimeout(to);window.__cdDiag.push('C'+(sIdx+1)+':不可达');s.remove();tryNext()};
+    document.head.appendChild(s);
+  })();
+}
+/* worker / wasm 核心 / 语言包全链多源 + 90 秒超时（有下载进度会自动续期），任一源成功即用 */
+var TESS_SOURCES=[
+  {workerPath:'https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+  {workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+  {workerPath:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+  {workerPath:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://unpkg.com/tesseract.js-core@5.0.0/',langPath:'https://tessdata.projectnaptha.com/4.0.0/'}
+];
+function tessCreateWorker(lang,oem,opts,cb){
+  var i=0;opts=opts||{};
+  window.__tessDiag=[];
+  (function tryNext(){
+    if(i>=TESS_SOURCES.length){cb(null);return}
+    var src=TESS_SOURCES[i++],srcIdx=i,settled=false,timer=null,p=null,lastErr='';
+    function settle(ok,w,why){
+      if(settled)return;settled=true;clearTimeout(timer);
+      if(ok){cb(w)}
+      else{
+        window.__tessDiag.push('S'+srcIdx+':'+String(why||lastErr||'fail').slice(0,60));
+        if(p&&p.then){p.then(function(late){try{late.terminate()}catch(e){}}).catch(function(){})}
+        tryNext();
+      }
+    }
+    function bumpTimer(){clearTimeout(timer);timer=setTimeout(function(){settle(false,null,'90s超时timeout')},90000)}
+    bumpTimer();
+    var userLog=opts.logger;
+    var cfg=Object.assign({},opts,{workerPath:src.workerPath,corePath:src.corePath,langPath:src.langPath,logger:function(m){bumpTimer();try{userLog&&userLog(m)}catch(e){}}});
+    try{p=window.Tesseract.createWorker(lang,oem,cfg)}
+    catch(e){lastErr=String(e&&e.message||e);settle(false);return}
+    p.then(function(w){settle(true,w)},function(e){lastErr=String(e&&e.message||e);settle(false)});
+  })();
+}
+function tessWorkerPromise(lang,oem,opts){
+  return new Promise(function(resolve,reject){
+    tessCreateWorker(lang,oem,opts,function(w){
+      if(w)resolve(w);
+      else{
+        var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+        var diag=(window.__tessDiag||[]).join(' | ');
+        reject(new Error('识别引擎加载失败：请检查网络（可换 Wi-Fi）后重试 engine load failed'+(diag?' ['+diag+']':'')+(mob?'；若在 App 内置浏览器打开，请复制链接改用系统浏览器 Safari/Chrome':'')));
+      }
+    });
+  });
+}
+function prepCanvas(img,frac){
+  var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+  var cw=w,ch=Math.max(40,Math.round(h*frac));
+  var scale=Math.max(1,1600/w);
+  var c=document.createElement('canvas');
+  c.width=Math.round(cw*scale);c.height=Math.round(ch*scale);
+  var ctx=c.getContext('2d');
+  ctx.drawImage(img,0,h-ch,cw,ch,0,0,c.width,c.height);
+  try{
+    var im=ctx.getImageData(0,0,c.width,c.height),px=im.data;
+    for(var i=0;i<px.length;i+=4){var g=0.299*px[i]+0.587*px[i+1]+0.114*px[i+2];px[i]=px[i+1]=px[i+2]=g}
+    ctx.putImageData(im,0,0);
+  }catch(e){}
+  return c;
+}
+function handleOcrFile(file){
+  if(ocrBusy){toast('正在识别中，请稍候 Still processing');return}
+  if(!file||!/^image\//.test(file.type)){toast('请选择图片文件 Please choose an image');return}
+  ocrBusy=true;
+  setOcr('正在加载识别引擎 Loading engine…',5);
+  loadTesseract(function(){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){URL.revokeObjectURL(url);runOcr(img)};
+    img.onerror=function(){URL.revokeObjectURL(url);ocrBusy=false;setOcr('图片读取失败，请换一张照片 Failed to read image',0,'bad')};
+    img.src=url;
+  });
+}
+/* ===== 行程凭证识别：机票 / 酒店订单截图 → 自动填行程 ===== */
+var travelBusy=false;
+function setTravel(msg,cls){
+  var st=document.getElementById('travelStatus');
+  st.classList.add('show');st.classList.remove('ok','bad');
+  if(cls)st.classList.add(cls);
+  document.getElementById('travelMsg').textContent=msg;
+}
+function handleTravelFiles(files){
+  if(travelBusy){toast('正在识别中，请稍候 Still processing');return}
+  var list=[].slice.call(files||[]).filter(function(f){return /^image\//.test(f.type)});
+  if(!list.length){toast('请选择图片文件 Please choose images');return}
+  travelBusy=true;
+  setTravel('正在加载识别引擎 Loading engine…');
+  loadTesseract(function(){
+    tessWorkerPromise('chi_sim+eng',1,null).then(function(w){
+      var texts=[],p=Promise.resolve();
+      list.forEach(function(f,i){
+        p=p.then(function(){
+          setTravel('正在识别第 '+(i+1)+' / '+list.length+' 张截图（首次需下载中文模型，稍等）Recognizing…');
+          return new Promise(function(res){
+            var url=URL.createObjectURL(f),img=new Image();
+            img.onload=function(){URL.revokeObjectURL(url);res(img)};
+            img.onerror=function(){URL.revokeObjectURL(url);res(null)};
+            img.src=url;
+          }).then(function(img){
+            if(!img)return '';
+            var w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height;
+            var sc=Math.max(1,Math.min(2.2,1600/w0));
+            var c=document.createElement('canvas');
+            c.width=Math.round(w0*sc);c.height=Math.round(h0*sc);
+            var ctx=c.getContext('2d');
+            try{ctx.imageSmoothingQuality='high'}catch(e2){}
+            ctx.drawImage(img,0,0,c.width,c.height);
+            return w.recognize(c).then(function(r){return (r&&r.data&&r.data.text)||''});
+          });
+        }).then(function(t){if(t)texts.push(t)});
+      });
+      return p.then(function(){return w.terminate()}).then(function(){
+        try{applyTravelTexts(texts)}finally{travelBusy=false}
+      });
+    }).catch(function(e){
+      travelBusy=false;
+      setTravel('识别失败，请重试或手动填写 Failed: '+String(e&&e.message||e).slice(0,60),'bad');
+    });
+  });
+}
+function travelSetField(id,val){
+  var el=document.getElementById(id);
+  if(!el||!val)return false;
+  if(el.tagName==='SELECT'){
+    for(var i=0;i<el.options.length;i++){
+      var ov=String(el.options[i].value),ot=String(el.options[i].text);
+      if(ov===String(val)||ot.toUpperCase().indexOf(String(val).toUpperCase())>-1){
+        el.value=ov;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));return true;
+      }
+    }
+    return false;
+  }
+  el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));
+  return true;
+}
+function applyTravelTexts(texts){
+  try{window.__travelTexts=(texts||[]).slice()}catch(e0){}
+  if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
+  var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='';
+  function squash(t){return t.replace(/[ \t]/g,'')}
+  function cleanCity(s){
+    var t=s;
+    while(t.length>2){
+      var m=t.match(/^(日|星期[一二三四五六日天]|周[一二三四五六日天])([\s\S]*)$/);
+      if(!m)break;t=m[2];
+    }
+    return t;
+  }
+  texts.forEach(function(t){
+    var sq=squash(t);
+    if(!hotel&&/入住|离店|房型|酒店详情|预订成功|酒店设施|套房|酒店/.test(sq)){hotel=t;return}
+    var ms=sq.match(/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/g)||[];
+    for(var k=0;k<ms.length;k++){
+      var mm=ms[k].match(/^([\u4e00-\u9fa5]{2,8})[-–—]([\u4e00-\u9fa5]{2,8})$/);
+      if(!mm)continue;
+      if(mm[2].indexOf('吉隆')>-1){if(!inbound){inbound=t;inbOrg=cleanCity(mm[1])}break}
+      if(mm[1].indexOf('吉隆')>-1){if(!ret)ret=t;break}
+    }
+  });
+  if(!inbound||!ret){
+    texts.forEach(function(t){
+      if(inbound&&ret)return;
+      if(t===inbound||t===ret||t===hotel)return;
+      var sq=squash(t);
+      if(!/[A-Z]{2}\d{3,4}/.test(sq)||!/月[\s\S]*日/.test(sq))return;
+      if(!inbound){inbound=t}
+      else if(!ret){ret=t}
+    });
+  }
+  function mdacDate(m1,m2){
+    var y=new Date().getFullYear();
+    return y+'-'+(m1<10?'0'+m1:m1)+'-'+(m2<10?'0'+m2:m2);
+  }
+  function firstDate(t){
+    var m=squash(t).match(/(\d{1,2})月(\d{1,2})日/);
+    return m?mdacDate(+m[1],+m[2]):null;
+  }
+  if(inbound){
+    var sq=squash(inbound);
+    var d=firstDate(inbound);
+    if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
+    if(inbOrg){
+      var portMap={北京:'CHN',上海:'CHN',广州:'CHN',深圳:'CHN',成都:'CHN',杭州:'CHN',西安:'CHN',厦门:'CHN',昆明:'CHN',重庆:'CHN',天津:'CHN',武汉:'CHN',长沙:'CHN',南京:'CHN',青岛:'CHN',海口:'CHN',三亚:'CHN',福州:'CHN',郑州:'CHN',乌鲁木齐:'CHN',香港:'HKG',澳门:'MAC',台北:'TWN',新加坡:'SGP',曼谷:'THA',首尔:'KOR',东京:'JPN',大阪:'JPN'};
+      var code=portMap[inbOrg]||(/^[\u4e00-\u9fa5]+$/.test(inbOrg)?'CHN':'');
+      if(code&&travelSetField('f-lastport',code))done.push('出发地 '+inbOrg);
+    }
+    var kidx=sq.indexOf('KUL');
+    var seg=(kidx>-1?sq.slice(0,kidx):sq).split('\n').filter(function(L){return L.indexOf('承运')<0}).join('\n');
+    var codes=seg.match(/[A-Z]{2}\d{3,4}/g);
+    var fn=codes?codes[codes.length-1]:null;
+    if(!fn){var all2=sq.match(/[A-Z]{2}\d{3,4}/g);if(all2)fn=all2[all2.length-1]}
+    if(fn){travelSetField('f-flight',fn);done.push('航班 '+fn)}
+    if(travelSetField('f-mode','Air'))done.push('出行方式 Air');
+  }
+  if(ret){
+    var rd=firstDate(ret);
+    if(rd){if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
+  }
+  if(hotel){
+    var lines=hotel.split(/\n/),name='',street='',pc='';
+    var pl=hotel.match(/\b(\d{5})\b/);
+    if(pl)pc=pl[1];
+    lines.forEach(function(L){
+      var t=L.trim();
+      if(!name&&/^[^A-Za-z0-9]*[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(t)&&/Suite|Hotel|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced/i.test(t)){
+        name=t.replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').replace(/^([a-z][A-Za-z]?\s+)/,'').trim();
+      }
+      if(pc&&t.indexOf(pc)>-1){
+        var sm=t.replace(/^[^A-Za-z]+/,'').match(/^([A-Za-z][A-Za-z0-9 .']{3,40}?)[,，]/);
+        if(sm)street=sm[1].replace(/^[A-Z]\s{2,}/,'').replace(/^JIn\b/,'Jln').replace(/\s{2,}/g,' ').trim();
+      }
+    });
+    if(DEST!=='TH'){
+      if(/吉隆/.test(hotel)){
+        travelSetField('f-state','14');travelSetField('f-city','KUALA LUMPUR');
+        done.push('州属 吉隆坡 · 城市 KUALA LUMPUR');
+      }else if(/雪兰莪/.test(hotel)){travelSetField('f-state','10');done.push('州属 雪兰莪')}
+    }
+    if(pc){travelSetField('f-postcode',pc);done.push('邮编 '+pc)}
+    if(name){travelSetField('f-address',name);done.push('酒店 '+name)}
+    if(street){travelSetField('f-address2',street);done.push('街道 '+street)}
+    travelSetField('f-accom','01');
+    var hc=firstDate(hotel);
+    if(hc&&!document.getElementById('f-arrival').value){if(travelSetField('f-arrival',hc))done.push('入住日期 '+hc)}
+  }
+  var today=new Date().toISOString().slice(0,10);
+  var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
+  if(av&&av<today)warn.push('识别到的抵达日期 '+av+' 已过去，请点开日期修改');
+  if(dv&&dv<today)warn.push('识别到的离境日期 '+dv+' 已过去，请点开日期修改');
+  if(!done.length){setTravel('没认出行程信息，请试试更清晰的截图，或手动填写 Nothing recognized','bad');return}
+  var msg='已识别并填入：'+done.join('；')+'。请核对，可直接修改。';
+  if(warn.length)msg+=' ⚠ '+warn.join('；');
+  setTravel(msg,warn.length?'bad':'ok');
+}
+// 独立证据集：从候选行中提取"直读自洽"的日期/有效期（各自校验位通过），供多候选交叉收敛
+function buildMrzEvidence(lines){
+  var ev={dob:{},exp:{}};
+  (lines||[]).forEach(function(L){
+    if(!L||L.length<28)return;
+    var d=L.substring(13,19),dc=L.charAt(19),e=L.substring(21,27),ec=L.charAt(27);
+    if(/^\d{6}$/.test(d)&&validMrzDate(d)&&mrzCdOK(d,dc))ev.dob[d]=1;
+    if(/^\d{6}$/.test(e)&&validMrzDate(e)&&mrzCdOK(e,ec))ev.exp[e]=1;
+    // 锚点滑窗通道：与固定列位的 std 直读机制相互独立，其形近映射后过校验位的日期同样作交叉证据。
+    // 在线版（无内置资料）依赖它收敛 std 修复产生的多候选（如 OY→01 联合修复出多个过校验位的日期）。
+    var ta=null;try{ta=tryL2Anchor(L)}catch(e0){}
+    if(ta){ev.dob[ta.dobS]=1;ev.exp[ta.expS]=1}
+  });
+  if(VERIFIED_PROFILE.passport){
+    var db=String(VERIFIED_PROFILE.dob||'').replace(/-/g,'');
+    if(/^\d{8}$/.test(db))ev.dob[db.substring(2)]=1;
+    var ex=String(VERIFIED_PROFILE.passportExp||'').replace(/-/g,'');
+    if(/^\d{8}$/.test(ex))ev.exp[ex.substring(2)]=1;
+  }
+  window.__mrzEv=ev;
+}
+// 整 MRZ 区精修画布：裁底部机读区、2 倍灰度、四周白边（调优验证：可显著降低行首字母丢失，如护照号前缀 P）
+function mrzZoneCanvas(img){
+  var W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+  var x0=0,y0=Math.round(H*0.75),x1=W,y1=Math.round(H*0.97);
+  var sc=2,w=Math.max(80,Math.round((x1-x0)*sc)),h=Math.max(24,Math.round((y1-y0)*sc)),pad=40;
+  var t=document.createElement('canvas');t.width=w;t.height=h;
+  var tc=t.getContext('2d');try{tc.imageSmoothingQuality='high'}catch(e0){}
+  tc.drawImage(img,x0,y0,x1-x0,y1-y0,0,0,w,h);
+  try{
+    var d=tc.getImageData(0,0,w,h),px=d.data;
+    for(var i=0;i<px.length;i+=4){var g=Math.round(0.299*px[i]+0.587*px[i+1]+0.114*px[i+2]);px[i]=px[i+1]=px[i+2]=g;px[i+3]=255}
+    tc.putImageData(d,0,0);
+  }catch(e1){}
+  var c=document.createElement('canvas');c.width=w+2*pad;c.height=h+2*pad;
+  var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+  ctx.drawImage(t,pad,pad);
+  return c;
+}
+function grayCanvas(img,y0,y1,scale){
+  var w=img.naturalWidth||img.width,bh=Math.max(8,y1-y0);
+  var c=document.createElement('canvas');
+  c.width=Math.max(80,Math.round(w*scale));c.height=Math.max(24,Math.round(bh*scale));
+  var ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=true;
+  try{ctx.imageSmoothingQuality='high'}catch(e){}
+  ctx.drawImage(img,0,y0,w,bh,0,0,c.width,c.height);
+  try{
+    var im=ctx.getImageData(0,0,c.width,c.height),px=im.data,n=px.length/4;
+    var gs=new Uint8Array(n),hist=new Uint32Array(256),i,j;
+    for(i=0,j=0;i<px.length;i+=4,j++){
+      var g=Math.round(0.299*px[i]+0.587*px[i+1]+0.114*px[i+2]);
+      gs[j]=g;hist[g]++;
+    }
+    var lo=0,hi=255,acc=0,cut=Math.max(1,Math.round(n*0.01));
+    for(i=0;i<256;i++){acc+=hist[i];if(acc>=cut){lo=i;break}}
+    acc=0;
+    for(i=255;i>=0;i--){acc+=hist[i];if(acc>=cut){hi=i;break}}
+    if(hi>lo){
+      var span=hi-lo;
+      for(i=0,j=0;i<px.length;i+=4,j++){
+        var v=Math.round((gs[j]-lo)*255/span);
+        if(v<0)v=0;if(v>255)v=255;
+        px[i]=px[i+1]=px[i+2]=v;
+      }
+    }else{
+      for(i=0,j=0;i<px.length;i+=4,j++)px[i]=px[i+1]=px[i+2]=gs[j];
+    }
+    ctx.putImageData(im,0,0);
+  }catch(e){}
+  return c;
+}
+function detectMrzBands(img){
+  var w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
+  var c=document.createElement('canvas');c.width=w;c.height=h;
+  var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+  var rows;
+  try{
+    var im=ctx.getImageData(0,0,w,h),px=im.data;rows=[];
+    for(var y=0;y<h;y++){
+      var cnt=0;
+      for(var x=0;x<w;x+=2){
+        var g=0.299*px[(y*w+x)*4]+0.587*px[(y*w+x)*4+1]+0.114*px[(y*w+x)*4+2];
+        if(g<95)cnt++;
+      }
+      rows.push(cnt);
+    }
+  }catch(e){return null}
+  var th=Math.max(3,Math.round(w*0.02));
+  var bands=[],inb=false,s=0;
+  for(var y=0;y<h;y++){
+    if(rows[y]>th&&!inb){inb=true;s=y}
+    else if(rows[y]<=th&&inb){inb=false;bands.push([s,y])}
+  }
+  if(inb)bands.push([s,h]);
+  bands=bands.filter(function(b){return b[1]-b[0]>=10&&b[1]-b[0]<=h*0.45});
+  if(!bands.length)return null;
+  return bands.slice(-4);
+}
+function runOcr(img){
+  setOcr('正在识别护照机读区 Reading MRZ…',15);
+  var worker=null,pool=[],bandsRef=null,prog=function(m){
+    if(m&&typeof m.progress==='number')setOcr('正在识别护照机读区 Reading MRZ… '+Math.round(m.progress*100)+'%',Math.max(15,Math.min(92,15+m.progress*77)));
+  };
+  var clean=function(t){return String(t||'').toUpperCase().replace(/＜/g,'<').replace(/ /g,'<').replace(/[^A-Z0-9<\n]/g,'')};
+  // 精修整区输出中的空格多为 OCR 误插入：直接删除而非替换为填充符，否则字段整体错位
+  var cleanZone=function(t){return String(t||'').toUpperCase().replace(/＜/g,'<').replace(/[^A-Z0-9<\n]/g,'')};
+  function collect(r,band){
+    var t=clean(r&&r.data?r.data.text:'').split('\n');
+    t.forEach(function(L){if(L.length>=15&&!pool.some(function(p){return p.s===L}))pool.push({s:L,b:band})});
+  }
+  function tryLines(){
+    buildMrzEvidence(pool.map(function(p){return p.s}));
+    var best=null;
+    for(var i=0;i<pool.length;i++)for(var j=0;j<pool.length;j++){
+      if(i===j)continue;
+      if(Math.abs(pool[i].b-pool[j].b)>1)continue;
+      var m=parseMRZ(pool[i].s+'\n'+pool[j].s,15);
+      if(m.ok&&(!best||m.score>best.score)){m.b1=pool[i].b;m.b2=pool[j].b;best=m}
+    }
+    return best;
+  }
+  tessWorkerPromise('eng',1,{logger:prog}).then(function(w){
+    worker=w;
+    return w.setParameters({tessedit_pageseg_mode:'6'});
+  }).then(function(){
+    var bands=detectMrzBands(img),seq=[],h=img.naturalHeight||img.height;
+    bandsRef=bands;
+    if(bands)bands.forEach(function(b,idx){
+      var y0=Math.max(0,b[0]-14),y1=Math.min(h,b[1]+10),bh=y1-y0;
+      var auto=Math.max(0.2,Math.min(2.5,42/bh));
+      [auto,0.5,1].forEach(function(sc){
+        if(sc<0.15||sc>3)return;
+        if(seq.some(function(it){return it.idx===idx&&Math.abs(it.sc-sc)<0.05}))return;
+        seq.push({idx:idx,y0:y0,y1:y1,sc:sc});
+      });
+    });
+    var p=Promise.resolve(),pct=18,step=seq.length?Math.max(3,Math.round(64/seq.length)):10;
+    seq.forEach(function(it){
+      p=p.then(function(){
+        setOcr('正在逐行识别机读码 Reading MRZ lines…',pct);pct=Math.min(88,pct+step);
+        var psm=(it.y1-it.y0)<=80?'7':'6';
+        return worker.setParameters({tessedit_pageseg_mode:psm}).then(function(){
+          return worker.recognize(grayCanvas(img,it.y0,it.y1,it.sc)).then(function(r){collect(r,it.idx)});
+        });
+      });
+    });
+    return p;
+  }).then(function(){
+    try{window.__mdacPool=pool.map(function(p){return{s:p.s,b:p.b}})}catch(e){}
+    var m=tryLines();
+    if(m){
+      var top=null;
+      if(bandsRef&&m.b1!=null&&bandsRef[Math.min(m.b1,m.b2)])top=bandsRef[Math.min(m.b1,m.b2)][0];
+      if(top&&top>60){
+        setOcr('正在识别出生地 Reading place of birth…',92);
+        return worker.recognize(grayCanvas(img,0,Math.max(0,top-8),0.55)).then(function(r){
+          var bc=matchBirthCountry((r&&r.data?r.data.text:'')||'');
+          if(bc)m.pob=bc;
+          return m;
+        }).catch(function(){return m});
+      }
+      return m;
+    }
+    setOcr('逐行识别未成功，精修机读区并交叉验证 Refining MRZ region…',88);
+    return worker.setParameters({tessedit_pageseg_mode:'6',tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'}).then(function(){
+      return worker.recognize(mrzZoneCanvas(img));
+    }).then(function(rz){
+      var rows=cleanZone(rz&&rz.data?rz.data.text:'').split('\n').filter(function(L){return L.length>=15});
+      try{window.__mdacRows=rows}catch(e){}
+      // 整区精修对号码行更稳，主路径逐行对姓名行更稳：两边候选自由配对，由校验位/综合位裁决
+      var cand=rows.slice();
+      pool.forEach(function(p){if(cand.indexOf(p.s)<0)cand.push(p.s)});
+      buildMrzEvidence(cand);
+      var best=null,i,j,m;
+      try{window.__mdacCands=[]}catch(e){}
+      for(i=0;i<cand.length;i++)for(j=0;j<cand.length;j++){
+        if(i===j)continue;
+        m=parseMRZ(cand[i]+'\n'+cand[j],15);
+        if(m.ok&&(!best||m.score>best.score))best=m;
+        if(m.ok){try{window.__mdacCands.push({l1:cand[i],l2:cand[j],name:m.name,score:m.score,warn:m.warn,pno:m.passportNo})}catch(e){}}
+      }
+      if(best)return best;
+      // 本人版本最后交叉确认：用内置已验证资料构造姓名行，与精修号码行配对
+      if(VERIFIED_PROFILE.passport){
+        var nw=VERIFIED_PROFILE.name.split(/\s+/);
+        var l1=('P<'+VERIFIED_PROFILE.nationality+nw[0]+'<<'+nw.slice(1).join('<')).toUpperCase();
+        l1=(l1+'<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<').substring(0,44);
+        for(j=0;j<rows.length;j++){
+          m=parseMRZ(l1+'\n'+rows[j],15);
+          if(m.ok&&(!best||m.score>best.score))best=m;
+        }
+      }
+      if(best)return best;
+      return worker.recognize(prepCanvas(img,0.35)).then(function(r1){
+        var m1=parseMRZ(clean(r1&&r1.data?r1.data.text:''));
+        if(m1.ok)return m1;
+        return worker.recognize(prepCanvas(img,1)).then(function(r2){return parseMRZ(clean(r2&&r2.data?r2.data.text:''))});
+      });
+    });
+  }).then(function(mrz){
+    if(worker){try{worker.terminate()}catch(e){}worker=null}
+    ocrBusy=false;
+    if(mrz&&mrz.ok)applyMrz(mrz);
+    else{
+      setOcr('未能识别出完整机读区（MRZ）。可换一张整页清晰的护照照片重试，或在下方表单直接核对修正。MRZ not recognized — try a clearer photo, or correct the fields below.',100,'bad');
+    }
+  }).catch(function(e){
+    if(worker){try{worker.terminate()}catch(e2){}worker=null}
+    ocrBusy=false;
+    setOcr('识别出错，请重试或手动填写 Error: '+(e&&e.message?e.message:'unknown'),0,'bad');
+  });
+}
+function applyMrz(m){
+  var profileMatch=false;
+  if(VERIFIED_PROFILE&&m.passportNo===VERIFIED_PROFILE.passport){
+    m.name=VERIFIED_PROFILE.name;profileMatch=true;
+  }
+  var setKeys=[];
+  function set(k,v){
+    if(!v)return;
+    var el=document.getElementById(IN_IDS[k]);
+    if(el){el.value=v;el.classList.remove('autoflash');void el.offsetWidth;el.classList.add('autoflash');setKeys.push(k)}
+  }
+  set('name',m.name);set('passport',m.passportNo);set('dob',m.dobISO);
+  set('nationality',m.nationality);set('sex',m.sex);set('passportExp',m.expiryISO);
+  set('pob',m.pob||m.nationality);
+  MRZ_SUR=m.surName||'';MRZ_GIV=m.givenName||'';
+  if(profileMatch){MRZ_SUR='WANG';MRZ_GIV='YA JIE'}
+  saveDraftLocal();
+  var msg='识别完成：已自动填入 '+setKeys.length+' 项';
+  if(m.warn)msg+='；'+m.warn;
+  if(m.pob)msg+='；出生地已按照片识别结果填入 Place of birth recognized from photo';
+  if(profileMatch)msg+='；识别结果与内置已验证资料一致，姓名按已验证资料填入 Verified profile matched';
+  msg+='。请核对，并补充联系方式与行程信息。Auto-filled '+setKeys.length+' fields';
+  setOcr(msg,100,'ok');
+  if(m.warn)toast(m.warn);
+  setTimeout(function(){var el=document.getElementById(IN_IDS.name);if(el)el.scrollIntoView({block:'center',behavior:reduceMotion?'auto':'smooth'})},400);
+}
+
+/* ===== 首页演示动画 ===== */
+function runDemo(){
+  var boxes=$$('#demoBody .box'),badge=$('#demoBadge');
+  if(!boxes.length)return;
+  boxes.forEach(function(b){b.textContent='';b.className='box'});
+  var items=boxes.map(function(b){return{b:b,v:b.getAttribute('data-demo')||''}});
+  function finishAll(){
+    items.forEach(function(it){it.b.textContent=it.v;it.b.className='box done'});
+    badge.textContent='AUTO-FILL';badge.classList.remove('live');
+  }
+  if(reduceMotion){finishAll();return}
+  badge.textContent='AUTO-FILLING';badge.classList.add('live');
+  var idx=0;
+  function typeNext(){
+    if(idx>=items.length){badge.textContent='AUTO-FILL';badge.classList.remove('live');return}
+    var it=items[idx];it.b.classList.add('typing');
+    var ci=0;
+    var timer=setInterval(function(){
+      it.b.textContent=it.v.substring(0,++ci);
+      if(ci>=it.v.length){
+        clearInterval(timer);it.b.classList.remove('typing');it.b.classList.add('done');
+        idx++;setTimeout(typeNext,200);
+      }
+    },34);
+  }
+  typeNext();
+}
+
+/* ===== 初始化 ===== */
+function keyById(id){for(var k in IN_IDS){if(IN_IDS[k]===id)return k}return null}
+/* ===== MDAC 助手插件桥接：检测插件 → 自动切换为插件模式 ===== */
+window.__mdacExt=false;
+window.addEventListener('message',function(e){
+  if(e.source!==window||!e.data||e.data.source!=='mdac-ext')return;
+  if(e.data.type==='MDAC_PONG'&&!window.__mdacExt){
+    window.__mdacExt=true;
+  }
+});
+try{window.postMessage({source:'mdac-page',type:'MDAC_PING'},'*')}catch(e){}
+(function(){
+  var n=0;
+  var iv=setInterval(function(){
+    if(window.__mdacExt||n>=6){clearInterval(iv);return}
+    n++;
+    try{window.postMessage({source:'mdac-page',type:'MDAC_PING'},'*')}catch(e){}
+  },1000);
+})();
+
+/* ===== 手机填表书签：自包含填表器（生成后不依赖本页，与插件同款逻辑） ===== */
+function bmMy(d){
+  var banner=null;
+  function note(m,s){
+    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';document.body.appendChild(banner)}
+    banner.textContent=m;clearTimeout(banner._t);
+    if(!s)banner._t=setTimeout(function(){banner.remove();banner=null},8000);
+  }
+  function g(i){return document.getElementById(i)}
+  function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+  function ss(i,v){var e=g(i);if(!e||!v)return 0;var val=String(v).toUpperCase();var o=e.options;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase();var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();if(ov===val||ot.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
+  function fmt(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
+  function mapData(x){return{name:x.name,passNo:x.passport,dob:fmt(x.dob),nationality:x.nationality,pob:x.pob,sex:x.sex==='Male'?'1':(x.sex==='Female'?'2':''),passExp:fmt(x.passportExp),email:x.email,confirmEmail:x.email,region:x.ccode,mobile:x.mobile,arr:fmt(x.arrival),dep:fmt(x.departure),vessel:x.flight,mode:x.mode==='Air'?'1':(x.mode==='Land'?'2':(x.mode==='Sea'?'3':'')),embark:x.lastPort,stay:x.accommodation,addr1:x.address,addr2:x.address2||'',state:x.state,city:x.city,postcode:x.postcode}}
+  function directFill(D){
+    var n=0,miss=[];
+    var T1=[['name',D.name],['passNo',D.passNo],['dob',D.dob],['passExpDte',D.passExp],['email',D.email],['confirmEmail',D.confirmEmail],['mobile',D.mobile],['arrDt',D.arr],['depDt',D.dep],['vesselNm',D.vessel],['accommodationAddress1',D.addr1],['accommodationAddress2',D.addr2],['accommodationPostcode',D.postcode]];
+    var S1=[['nationality',D.nationality],['pob',D.pob],['sex',D.sex],['trvlMode',D.mode],['embark',D.embark],['accommodationStay',D.stay]];
+    T1.forEach(function(p){if(p[1]){if(st(p[0],p[1]))n++;else miss.push(p[0])}});
+    S1.forEach(function(p){if(p[1]){if(ss(p[0],p[1]))n++;else miss.push(p[0])}});
+    return new Promise(function(res){
+      setTimeout(function(){
+        if(D.region&&g('region')&&!g('region').value){if(ss('region',D.region))n++}
+        if(!D.state){res({n:n,miss:miss});return}
+        if(ss('accommodationState',D.state)){
+          n++;
+          var tries=0,cok=0,counted=false;
+          var t=setInterval(function(){
+            tries++;
+            if(!cok&&D.city)cok=ss('accommodationCity',D.city);
+            if(cok&&!counted){counted=true;n++}
+            if(cok||tries>=12){
+              clearInterval(t);
+              if(!cok&&D.postcode&&g('accommodationPostcode')&&!g('accommodationPostcode').value){if(st('accommodationPostcode',D.postcode))n++}
+              if(!cok)miss.push('accommodationCity');
+              res({n:n,miss:miss});
+            }
+          },800);
+        }else{miss.push('accommodationState');res({n:n,miss:miss})}
+      },900);
+    });
+  }
+  function genericFill(D,x){
+    var A=[['confirm email',D.email],['email address',D.email],['passport no',D.passNo],['passport expiry',D.passExp],['date of birth',D.dob],['place of birth',D.pob],['nationality',D.nationality],['sex',x.sex],['country code',D.region],['mobile',D.mobile],['arrival',D.arr],['departure',D.dep],['flight',D.vessel],['mode of travel',x.mode],['last port',D.embark],['accommodation',x.accommodation],['address',D.addr1],['state',x.state],['postcode',D.postcode],['city',x.city],['name',D.name]].filter(function(p){return p[1]});
+    var I=[].slice.call(document.querySelectorAll('input:not([type=hidden]):not([type=button]):not([type=submit]):not([type=reset]):not([type=radio]):not([type=checkbox]):not([type=file]):not([type=image]),select,textarea'));
+    var U=[],n=0;
+    function T(e){
+      var t=[],l;
+      if(e.id){try{l=document.querySelector('label[for="'+e.id+'"]');if(l)t.push(l.textContent)}catch(x1){}}
+      try{l=e.closest('label');if(l)t.push(l.textContent)}catch(x2){}
+      var td=e.closest('td');if(td&&td.previousElementSibling)t.push(td.previousElementSibling.textContent);
+      if(e.placeholder)t.push(e.placeholder);
+      if(e.getAttribute('aria-label'))t.push(e.getAttribute('aria-label'));
+      t.push(e.name||'');t.push(e.id||'');
+      return t.join(' ').toLowerCase();
+    }
+    function S(e,v){
+      if(e.tagName==='SELECT'){
+        var o=e.options;
+        for(var j=0;j<o.length;j++){
+          if(o[j].text.toLowerCase().indexOf(String(v).toLowerCase())>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+        }
+        return 0;
+      }
+      e.value=v;
+      if(e.type==='date'&&!e.value)e.value=String(v).split('/').reverse().join('-');
+      e.dispatchEvent(new Event('input',{bubbles:true}));
+      e.dispatchEvent(new Event('change',{bubbles:true}));
+      return 1;
+    }
+    A.forEach(function(p){
+      var a=p[0],v=p[1];
+      for(var i=0;i<I.length;i++){
+        var e=I[i];
+        if(U.indexOf(e)>-1)continue;
+        if(T(e).indexOf(a)>-1){U.push(e);n+=S(e,v);break}
+      }
+    });
+    return Promise.resolve({n:n,miss:[]});
+  }
+  function doFill(){
+    var D=mapData(d);
+    note('MDAC 助手正在自动填入…',true);
+    var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
+    p.then(function(r){
+      var m='MDAC 助手：已自动填入 '+r.n+' 项';
+      if(r.miss&&r.miss.length)m+='；未填入：'+r.miss.join(', ')+'，请手动补填';
+      m+='。请核对后自行提交。';
+      note(m,true);
+    });
+  }
+  var tries=0;
+  var t=setInterval(function(){
+    tries++;
+    if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
+    if(tries===1){note('MDAC 助手已就绪：等待官方表单加载完成后自动填入…',true)}
+    if(tries>=30){clearInterval(t);note('MDAC 助手：约 45 秒内未检测到表单，请确认已打开 MDAC 申报页后重新点书签',true)}
+  },1500);
+}
+function bmTh(d){
+  var banner=null;
+  function note(m,s){
+    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';document.body.appendChild(banner)}
+    banner.textContent=m;clearTimeout(banner._t);
+    if(!s)banner._t=setTimeout(function(){banner.remove();banner=null},8000);
+  }
+  function fmt(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
+  function fcAny(names){
+    for(var i=0;i<names.length;i++){
+      var el=document.querySelector('input[formcontrolname="'+names[i]+'"], textarea[formcontrolname="'+names[i]+'"]');
+      if(el)return el;
+      var host=document.querySelector('[formcontrolname="'+names[i]+'"]');
+      if(host){var inp=host.querySelector('input, textarea');if(inp)return inp}
+    }
+    return null;
+  }
+  function vis(el){if(!el)return false;var r=el.getBoundingClientRect();return r.width>=10&&r.height>=10}
+  function setNg(el,v){if(!el)return 0;try{el.focus()}catch(e){}el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));try{el.blur()}catch(e2){}return 1}
+  function pick(val,cb,tries){
+    var n=0,T=tries||10;
+    var t=setInterval(function(){
+      n++;
+      var cands=[].slice.call(document.querySelectorAll('mat-option,.mat-option,sit-option,[class*="option"]')).filter(function(o){
+        if(!vis(o))return false;
+        var s=(o.textContent||'').trim();
+        if(!s||s.length>60)return false;
+        return s.toUpperCase().indexOf(String(val).toUpperCase())>-1;
+      });
+      if(cands.length){
+        cands.sort(function(a,b){return (a.textContent||'').trim().length-(b.textContent||'').trim().length});
+        cands[0].click();clearInterval(t);cb(1);return;
+      }
+      if(n>=T){clearInterval(t);cb(0)}
+    },320);
+  }
+  function ana(names,vals,cb){
+    var el=fcAny(names);
+    if(!el)return cb(0);
+    try{el.scrollIntoView({block:'center'})}catch(e){}
+    try{el.focus()}catch(e2){}
+    el.value=vals[0];
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    pick(vals[0],function(ok){
+      if(ok)return cb(1);
+      if(vals.length>1){
+        el.value=vals[1];
+        el.dispatchEvent(new Event('input',{bubbles:true}));
+        pick(vals[1],function(ok2){
+          if(ok2)return cb(1);
+          el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:13,bubbles:true}));
+          cb(0);
+        },6);
+        return;
+      }
+      el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:13,bubbles:true}));
+      cb(0);
+    });
+  }
+  function optRow(name,val,cb){
+    var row=document.querySelector('[formcontrolname="'+name+'"]');
+    if(!row)return cb(0);
+    try{row.scrollIntoView({block:'center'})}catch(e){}
+    var kids=[].slice.call(row.querySelectorAll('*')).filter(function(o){
+      if(!vis(o))return false;
+      var s=(o.textContent||'').trim();
+      if(!s||s.length>40)return false;
+      return s.toUpperCase().indexOf(String(val).toUpperCase())>-1;
+    });
+    if(kids.length){
+      kids.sort(function(a,b){return (a.textContent||'').trim().length-(b.textContent||'').trim().length});
+      kids[0].click();setTimeout(function(){cb(1)},250);return;
+    }
+    cb(0);
+  }
+  function sel(name,vals,cb){
+    var host=document.querySelector('[formcontrolname="'+name+'"]');
+    if(!host)return cb(0);
+    try{host.scrollIntoView({block:'center'})}catch(e){}
+    host.click();
+    setTimeout(function(){
+      pick(vals[0],function(ok){
+        if(ok)return cb(1);
+        if(vals.length>1){
+          host.click();
+          setTimeout(function(){pick(vals[1],function(ok2){cb(ok2)},8)},400);
+          return;
+        }
+        cb(0);
+      },8);
+    },400);
+  }
+  function datePick(names,dmy,cb){
+    var el=fcAny(names);
+    if(!el)return cb(0);
+    try{el.scrollIntoView({block:'center'})}catch(e){}
+    try{el.focus()}catch(e2){}
+    el.value=dmy;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:13,bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+    try{el.blur()}catch(e3){}
+    setTimeout(function(){cb(el.value?1:0)},500);
+  }
+  function seq(steps,done){(function next(i){if(i>=steps.length){done();return}steps[i](function(){next(i+1)})})(0)}
+  function stepperNext(cb){
+    var btn=document.querySelector('button[matsteppernext], .next-button:not([disabled])');
+    if(btn){try{btn.scrollIntoView({block:'center'})}catch(e){}btn.click()}
+    setTimeout(cb,900);
+  }
+  var TH_MON=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+  function thaiFill(){
+    var n=0,miss=[];
+    function ok(x,name){if(x)n++;else miss.push(name)}
+    ok(setNg(fcAny(['familyName']),(d.surName||d.name||'').toUpperCase()),'familyName');
+    ok(setNg(fcAny(['firstName']),(d.givenName||'').toUpperCase()),'firstName');
+    ok(setNg(fcAny(['passportNo']),d.passport||''),'passportNo');
+    if(d.occupation)ok(setNg(fcAny(['occupation']),String(d.occupation).toUpperCase()),'occupation');
+    if(d.ccode)ok(setNg(fcAny(['phoneCode']),d.ccode),'phoneCode');
+    if(d.mobile)ok(setNg(fcAny(['phoneNo']),d.mobile),'phoneNo');
+    if(d.flight)ok(setNg(fcAny(['flightNo']),d.flight),'flightNo');
+    if(d.deptflight)ok(setNg(fcAny(['deptFlightNo']),d.deptflight),'deptFlightNo');
+    if(d.postcode)ok(setNg(fcAny(['accPostCode']),d.postcode),'accPostCode');
+    if(d.accAddress||d.address)ok(setNg(fcAny(['accAddress']),(d.accAddress||d.address).slice(0,215)),'accAddress');
+    if(d.email)ok(setNg(fcAny(['sendTo']),d.email),'sendTo');
+    var dob=String(d.dob||'').split('-');
+    var steps=[];
+    if(dob.length===3){
+      steps.push(function(cb){ana(['bdDateYear','bdYear'],[dob[0]],function(x){ok(x,'出生年');cb()})});
+      steps.push(function(cb){ana(['bdDateMonth','bdMonth'],[TH_MON[+dob[1]-1]||'',dob[1]],function(x){ok(x,'出生月');cb()})});
+      steps.push(function(cb){ana(['bdDateDay','bdDay'],[dob[2]],function(x){ok(x,'出生日');cb()})});
+    }
+    steps.push(function(cb){ana(['nationalityDesc'],['CHINA'],function(x){ok(x,'nationality');cb()})});
+    steps.push(function(cb){optRow('gender',d.sex==='Female'?'FEMALE':'MALE',function(x){ok(x,'gender');cb()})});
+    steps.push(function(cb){stepperNext(cb)});
+    steps.push(function(cb){datePick(['arrDate'],fmt(d.arrival),function(x){ok(x,'arrDate');cb()})});
+    steps.push(function(cb){datePick(['deptDate'],fmt(d.departure),function(x){ok(x,'deptDate');cb()})});
+    steps.push(function(cb){optRow('traModeId',d.mode?String(d.mode).toUpperCase():'AIR',function(x){ok(x,'traMode(出行方式)');cb()})});
+    steps.push(function(cb){optRow('deptTraModeId',d.mode?String(d.mode).toUpperCase():'AIR',function(x){ok(x,'deptTraMode(离境方式)');cb()})});
+    if(d.purpose)steps.push(function(cb){sel('traPurposeId',[d.purpose],function(x){ok(x,'traPurpose(旅行目的)');cb()})});
+    if(d.lastPortName)steps.push(function(cb){ana(['countryBoardDesc'],[String(d.lastPortName).toUpperCase()],function(x){ok(x,'countryBoard(出发国家)');cb()})});
+    steps.push(function(cb){stepperNext(cb)});
+    var accKw=d.accommodation==='02'?['FRIEND','RELATIVE']:(d.accommodation==='99'?['OTHER']:['HOTEL']);
+    steps.push(function(cb){sel('accTypeId',accKw,function(x){ok(x,'accType(住宿类型)');cb()})});
+    if(d.state)steps.push(function(cb){ana(['accProvinceDesc'],[d.state],function(x){ok(x,'accProvince(府)');cb()})});
+    if(d.city)steps.push(function(cb){ana(['accDistrictDesc','accDistrict'],[d.city],function(x){ok(x,'accDistrict(县/区)');cb()})});
+    seq(steps,function(){
+      var m='TDAC 助手：已自动填入 '+n+' 项';
+      if(miss.length)m+='；未自动选上：'+miss.join('、')+'，请手动点选补齐';
+      m+='。健康申报与声明勾选请自行确认，核对无误后自行提交。';
+      note(m,true);
+    });
+  }
+  var ticks=0,filled=false,readyShown=false;
+  var timer=null;
+  function tryFill(){
+    if(filled)return;
+    ticks++;
+    if(ticks>400){clearInterval(timer);return}
+    var form=document.querySelector('input[formcontrolname="passportNo"], [formcontrolname="passportNo"]');
+    if(!form){
+      if(!readyShown){readyShown=true;note('TDAC 助手已就绪：请在页面完成人机验证并点击 Arrival Card，表单打开后自动填入',true)}
+      return;
+    }
+    filled=true;
+    note('TDAC 助手正在自动填入…',true);
+    setTimeout(thaiFill,600);
+  }
+  timer=setInterval(tryFill,1500);
+  window.addEventListener('hashchange',function(){setTimeout(tryFill,800)});
+  tryFill();
+}
+function buildBookmarklet(d){
+  var fn=d.dest==='TH'?bmTh:bmMy;
+  return 'javascript:'+encodeURIComponent('('+fn.toString()+')('+JSON.stringify(d)+')');
+}
+
+function init(){
+  window.__mdac={parseMRZ:parseMRZ,readDraft:readDraft,validate:validate,buildBookmarklet:buildBookmarklet};
+  loadDest();
+  $$('.country-card').forEach(function(a){
+    a.addEventListener('click',function(){setDest(a.getAttribute('data-dest')||'MY')});
+  });
+  fillCountrySelects();
+  restoreDraft();
+  applyDestUI();
+  var seeded=seedVerifiedProfile();
+  $('#f-arrival').min=todayISO();
+  $('#f-departure').min=todayISO();
+  var form=$('#mdacForm');
+  function onFormChange(e){var k=keyById(e.target.id);if(k){clearErr(k);saveDraftLocal()}}
+  form.addEventListener('input',onFormChange);
+  form.addEventListener('change',onFormChange);
+  $('#btnToReview').addEventListener('click',function(){
+    var d=validate();
+    if(d){renderReview();location.hash='#/review'}
+  });
+  /* 资料定稿：标注目的地并补全泰国侧派生字段（推送插件与手机书签共用） */
+  function finalizeDraft(d){
+    d.dest=DEST;
+    if(DEST==='TH'){
+      d.surName=(MRZ_SUR||String(d.name||'').split(' ')[0]||'').toUpperCase();
+      d.givenName=(MRZ_GIV||String(d.name||'').split(' ').slice(1).join(' ')).toUpperCase();
+      d.accAddress=[d.address,d.address2].filter(Boolean).join(', ');
+      try{
+        var lpEl=document.getElementById('f-lastport');
+        if(lpEl&&lpEl.selectedIndex>0){
+          var lpTxt=lpEl.options[lpEl.selectedIndex].text||'';
+          d.lastPortName=(lpTxt.split(' - ')[1]||lpTxt).split(' ')[0].toUpperCase();
+        }
+      }catch(e){}
+    }
+    return d;
+  }
+  $('#btnGenerate').addEventListener('click',function(){
+    if(!$('#confirmOK').checked){$('#confirmLine').classList.add('errtext');toast('请先勾选确认声明 Please tick the confirmation');return}
+    var d=validate();
+    if(!d){location.hash='#/apply';return}
+    /* 确认完成即直接自动录入：无中间页、无弹窗 */
+    d=finalizeDraft(d);
+    if(window.__mdacExt){
+      try{window.postMessage({source:'mdac-page',type:'MDAC_PUSH_OPEN',data:JSON.parse(JSON.stringify(d))},'*')}catch(e){}
+      toast(DEST==='TH'?'已保存资料并打开泰国官方入境卡页面，通过人机验证后自动填入':'已保存资料并打开马来西亚官方 MDAC 页面，自动填入');
+    }else{
+      toast('电脑助手未连接：手机上请使用下方「复制手机填表书签」按钮');
+    }
+  });
+  $('#btnBmCopy').addEventListener('click',function(){
+    var d=validate();
+    if(!d){location.hash='#/apply';return}
+    d=finalizeDraft(d);
+    var url=buildBookmarklet(d);
+    var done=function(ok){
+      toast(ok?'已复制手机填表书签：发到手机存为浏览器书签，打开官方申报页后点书签自动填入':'复制失败：请改在电脑 Edge 上使用自动录入，或手动复制提示内容');
+    };
+    var fallback=function(){
+      var ok=false;
+      try{
+        var ta=document.createElement('textarea');
+        ta.value=url;ta.style.cssText='position:fixed;left:-9999px';
+        document.body.appendChild(ta);ta.select();
+        ok=document.execCommand('copy');
+        ta.remove();
+      }catch(e2){}
+      done(ok);
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){done(true)},fallback);
+    }else{fallback()}
+  });
+  $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
+  var zone=$('#ocrZone');
+  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('dragover')});
+  zone.addEventListener('dragleave',function(e){e.preventDefault();zone.classList.remove('dragover')});
+  zone.addEventListener('drop',function(e){
+    e.preventDefault();zone.classList.remove('dragover');
+    var f=e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(f)handleOcrFile(f);
+  });
+  $('#ocrFile').addEventListener('change',function(){
+    if(this.files&&this.files[0])handleOcrFile(this.files[0]);
+    this.value='';
+  });
+  $('#travelFile').addEventListener('change',function(){
+    if(this.files&&this.files.length)handleTravelFiles(this.files);
+    this.value='';
+  });
+  var tz=$('#travelZone');
+  tz.addEventListener('dragover',function(e){e.preventDefault();tz.classList.add('dragover')});
+  tz.addEventListener('dragleave',function(e){e.preventDefault();tz.classList.remove('dragover')});
+  tz.addEventListener('drop',function(e){
+    e.preventDefault();tz.classList.remove('dragover');
+    if(e.dataTransfer.files&&e.dataTransfer.files.length)handleTravelFiles(e.dataTransfer.files);
+  });
+  route();
+  setTimeout(runDemo,900);
+}
+init();
+})();
+</script>
+</body>
+</html>
