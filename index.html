@@ -346,7 +346,7 @@ footer .fine{border-top:1px solid rgba(255,255,255,.14);margin-top:26px;padding-
         </details>
         <details>
           <summary>手机上能用自动录入吗？<small>Does auto-fill work on mobile?</small></summary>
-          <div class="a">自动录入通过电脑上双击「<b>MDAC一键启动.bat</b>」打开本页使用（内置浏览器插件，全程自动填入）；手机浏览器没有插件，无法自动录入，请改在<b>电脑端</b>操作。Auto-fill runs on desktop via the one-click launcher with the built-in extension.</div>
+          <div class="a">可以。在「核对」页点「① 安装填表书签」把书签装进 Safari（仅首次一次）；以后每次点「② 生成填表码」，打开官方申报页后点书签、粘贴填表码，资料自动填入，最终提交仍由你手动完成。Mobile auto-fill works via a one-time bookmarklet plus a fill code.</div>
         </details>
       </div>
     </section>
@@ -609,10 +609,22 @@ footer .fine{border-top:1px solid rgba(255,255,255,.14);margin-top:26px;padding-
       <span>我确认以上资料真实、与护照一致，并了解自动填写仅录入表单、<b>最终提交由我在官方页面亲自确认</b>。I confirm the details match my passport; the auto-fill button only fills the form — I will submit it myself on the official portal.</span>
     </label>
     <div class="notice" id="bmBox">
-      <b>手机填表</b>：点下方按钮复制填表书签，把内容发到手机（如发给微信文件传输助手）并复制；在手机浏览器里随便收藏一个书签，编辑它、把网址替换为粘贴的内容（iPhone 用 Safari，安卓任意浏览器均可）。以后打开官方申报页后点一下该书签，即可自动填入全部资料；最终提交仍由你手动完成。
-      <div style="margin-top:10px">
-        <button type="button" class="btn btn-line" id="btnBmCopy">复制手机填表书签 · Copy mobile bookmark</button>
+      <b>手机自动填表（iPhone / 安卓均可）</b>——首次设置 1 分钟，之后每次只需 3 步：
+      <ol style="margin:8px 0 4px;padding-left:20px">
+        <li><b>首次</b>：点「① 安装填表书签」复制 → Safari 随便收藏一个网页 → 打开书签编辑：标题改成「填表」，网址清空后粘贴刚复制的内容 → 存储。这一步只做一次。</li>
+        <li><b>每次</b>：填完上面资料后点「② 生成填表码」，自动复制。</li>
+        <li>打开官方申报页（ Malaysia 点 <a href="https://imigresen-online.imi.gov.my/mdac/main" target="_blank" rel="noopener">imigresen-online.imi.gov.my</a> / Thailand 点 <a href="https://tdac.immigration.go.th/visitors/arrival" target="_blank" rel="noopener">tdac.immigration.go.th</a> ）→ 点书签「填表」→ 弹窗里长按粘贴 → 确定，全部资料自动填入。核对后你手动提交。</li>
+      </ol>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px">
+        <button type="button" class="btn btn-line" id="btnIosBm">① 安装填表书签（首次一次）· Install bookmark</button>
+        <button type="button" class="btn btn-line" id="btnIosCode">② 生成填表码（每次）· Copy fill code</button>
       </div>
+      <details style="margin-top:8px">
+        <summary style="cursor:pointer;color:var(--navy3)">安卓 Firefox 用户或书签安装失败？点这里用整段式书签</summary>
+        <div style="margin-top:6px">
+          <button type="button" class="btn btn-line" id="btnBmCopy">复制完整填表书签（数据内嵌版）</button>
+        </div>
+      </details>
     </div>
     <div class="form-actions">
       <a class="btn btn-line" href="#/apply">返回修改</a>
@@ -2003,6 +2015,8 @@ function bmTh(d){
   window.addEventListener('hashchange',function(){setTimeout(tryFill,800)});
   tryFill();
 }
+/* 手机通用书签加载的填表器地址（GitHub Pages 托管，改 fill.js 即全员升级） */
+var FILL_JS_URL='https://2691199739-droid.github.io/entry-card/fill.js';
 function buildBookmarklet(d){
   var fn=d.dest==='TH'?bmTh:bmMy;
   return 'javascript:'+encodeURIComponent('('+fn.toString()+')('+JSON.stringify(d)+')');
@@ -2055,7 +2069,7 @@ function init(){
       try{window.postMessage({source:'mdac-page',type:'MDAC_PUSH_OPEN',data:JSON.parse(JSON.stringify(d))},'*')}catch(e){}
       toast(DEST==='TH'?'已保存资料并打开泰国官方入境卡页面，通过人机验证后自动填入':'已保存资料并打开马来西亚官方 MDAC 页面，自动填入');
     }else{
-      toast('电脑助手未连接：手机上请使用下方「复制手机填表书签」按钮');
+      toast('电脑助手未连接：手机上请在下方「手机自动填表」区使用书签 + 填表码');
     }
   });
   $('#btnBmCopy').addEventListener('click',function(){
@@ -2064,7 +2078,7 @@ function init(){
     d=finalizeDraft(d);
     var url=buildBookmarklet(d);
     var done=function(ok){
-      toast(ok?'已复制手机填表书签：发到手机存为浏览器书签，打开官方申报页后点书签自动填入':'复制失败：请改在电脑 Edge 上使用自动录入，或手动复制提示内容');
+      toast(ok?'已复制完整书签（数据内嵌版）：存为浏览器书签后，打开官方申报页点书签自动填入':'复制失败：请长按下方提示文字手动复制');
     };
     var fallback=function(){
       var ok=false;
@@ -2080,6 +2094,41 @@ function init(){
     if(navigator.clipboard&&navigator.clipboard.writeText){
       navigator.clipboard.writeText(url).then(function(){done(true)},fallback);
     }else{fallback()}
+  });
+  /* ===== iPhone / 手机通用书签 + 填表码 ===== */
+  function copyText(text,okMsg,failMsg){
+    var fallback=function(){
+      var ok=false;
+      try{
+        var ta=document.createElement('textarea');
+        ta.value=text;ta.style.cssText='position:fixed;left:-9999px;top:0';
+        ta.contentEditable='true';ta.readOnly=false;
+        var rg=document.createRange();rg.selectNodeContents(ta);
+        var sel=window.getSelection();sel.removeAllRanges();sel.addRange(rg);
+        ta.setSelectionRange(0,text.length);
+        document.body.appendChild(ta);
+        ok=document.execCommand('copy');
+        ta.remove();
+      }catch(e2){}
+      toast(ok?okMsg:(failMsg||'复制失败，请重试'));
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){toast(okMsg)},fallback);
+    }else{fallback()}
+  }
+  $('#btnIosBm').addEventListener('click',function(){
+    var js="(function(){var s=document.createElement('script');s.src='"+FILL_JS_URL+"?t='+Date.now();s.onerror=function(){alert('书签脚本加载失败：请检查手机网络（需可访问 GitHub）后重试')};document.body.appendChild(s)})()";
+    var url='javascript:'+encodeURIComponent(js);
+    copyText(url,'已复制书签安装码。接下来（只需这一次）：1. Safari 随便收藏一个网页；2. 书签图标 → 编辑；3. 标题改成「填表」，网址清空后粘贴刚复制的内容 → 存储。','复制失败：请重试一次');
+  });
+  $('#btnIosCode').addEventListener('click',function(){
+    var d=validate();
+    if(!d){location.hash='#/apply';return}
+    d=finalizeDraft(d);
+    var code='';
+    try{code=btoa(unescape(encodeURIComponent(JSON.stringify(d))))}catch(e){}
+    if(!code){toast('生成失败，请重试');return}
+    copyText(code,'填表码已复制。打开官方申报页 → 点书签「填表」→ 弹窗里长按粘贴 → 确定，自动填入后你手动提交。','复制失败：请重试一次');
   });
   $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
   var zone=$('#ocrZone');
