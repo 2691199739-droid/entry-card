@@ -488,7 +488,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         </div>
         <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <button type="button" class="btn btn-line btn-sm" id="autoGenTravel">无截图？一键生成返程 + 吉隆坡酒店</button>
-          <span style="font-size:12px;color:var(--mut-2)">自动生成的返程与酒店信息仅供占位，提交前请核对修改</span>
+          <span style="font-size:12px;color:var(--mut-2)">返程与酒店为随机示例，每次刷新网页会自动换一组，提交前请核对修改</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
         <div class="grid">
@@ -791,6 +791,8 @@ function saveDraftLocal(){
 }
 function restoreDraft(){
   try{var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');if(d)writeDraft(d)}catch(e){}
+  // 返程与酒店为随机示例信息：每次加载页面重新随机换一组（用户要求刷新即变）
+  try{autoGenReturnHotel(true)}catch(e0){}
 }
 
 /* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
@@ -1376,42 +1378,68 @@ var KL_HOTELS=[
   {name:'Pullman Kuala Lumpur City Centre',street:'4 Jalan Conlay',pc:'50450'},
   {name:'W Kuala Lumpur',street:'121 Jalan Ampang',pc:'50450'}
 ];
-var AIR_PREFIX=['MH','AK','D7','OD','CZ','MU','TG','FD'];
+/* 真实离境航班池：MY=吉隆坡出发，TH=曼谷出发（均为在飞的真实航班号，随机换用） */
+var DEPT_FLIGHTS_MY=[
+  {no:'D7342',label:'D7342 吉隆坡→北京大兴'},
+  {no:'MH360',label:'MH360 吉隆坡→北京首都'},
+  {no:'MH388',label:'MH388 吉隆坡→上海浦东'},
+  {no:'MH376',label:'MH376 吉隆坡→广州白云'},
+  {no:'CZ366',label:'CZ366 吉隆坡→广州白云'},
+  {no:'D7316',label:'D7316 吉隆坡→上海浦东'},
+  {no:'D7320',label:'D7320 吉隆坡→成都天府'},
+  {no:'AK112',label:'AK112 吉隆坡→广州白云'},
+  {no:'MF898',label:'MF898 吉隆坡→厦门高崎'},
+  {no:'MU540',label:'MU540 吉隆坡→上海浦东'}
+];
+var DEPT_FLIGHTS_TH=[
+  {no:'TG614',label:'TG614 曼谷→北京首都'},
+  {no:'TG664',label:'TG664 曼谷→上海浦东'},
+  {no:'TG679',label:'TG679 曼谷→广州白云'},
+  {no:'MU542',label:'MU542 曼谷→上海浦东'},
+  {no:'CZ358',label:'CZ358 曼谷→广州白云'},
+  {no:'CA980',label:'CA980 曼谷→北京首都'},
+  {no:'FM834',label:'FM834 曼谷→上海浦东'},
+  {no:'9C7492',label:'9C7492 曼谷→上海浦东'}
+];
+function randDeptFlight(){
+  var pool=DEST==='TH'?DEPT_FLIGHTS_TH:DEPT_FLIGHTS_MY;
+  return pool[randInt(0,pool.length-1)];
+}
 function randInt(a,b){return a+Math.floor(Math.random()*(b-a+1))}
 function dstr(dt){var m=dt.getMonth()+1,dd=dt.getDate();return dt.getFullYear()+'-'+(m<10?'0'+m:m)+'-'+(dd<10?'0'+dd:dd)}
-function autoGenReturnHotel(){
+function autoGenReturnHotel(force){
   var done=[],auto=[];
   var arr=document.getElementById('f-arrival').value;
   var base=arr?new Date(arr+'T00:00:00'):new Date();
   if(!arr){base.setDate(base.getDate()+1)}
   var depEl=document.getElementById('f-departure');
-  if(depEl&&!depEl.value){
+  if(depEl&&(force||!depEl.value)){
     var d=new Date(base.getTime());d.setDate(d.getDate()+7+randInt(0,2));
     var iso=dstr(d);
     if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
   }
   var df=document.getElementById('f-deptflight');
-  if(df&&!df.value){
-    var fn=AIR_PREFIX[randInt(0,AIR_PREFIX.length-1)]+(''+randInt(100,9999));
-    if(travelSetField('f-deptflight',fn))auto.push('离境航班 '+fn);
+  if(df&&(force||!df.value)){
+    var fl=randDeptFlight();
+    if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
   }
   var h=KL_HOTELS[randInt(0,KL_HOTELS.length-1)];
-  if(!document.getElementById('f-address').value){
+  if(force||!document.getElementById('f-address').value){
     if(travelSetField('f-address',h.name))auto.push('酒店 '+h.name);
   }
-  if(!document.getElementById('f-address2').value){
+  if(force||!document.getElementById('f-address2').value){
     travelSetField('f-address2',h.street);
   }
   if(DEST!=='TH'){
     var st=document.getElementById('f-state');
-    if(st&&!st.value){if(travelSetField('f-state','14'))auto.push('州属 W.P. Kuala Lumpur')}
+    if(st&&(force||!st.value)){if(travelSetField('f-state','14'))auto.push('州属 W.P. Kuala Lumpur')}
     var ct=document.getElementById('f-city');
-    if(ct&&!ct.value){if(travelSetField('f-city','KUALA LUMPUR'))auto.push('城市 KUALA LUMPUR')}
+    if(ct&&(force||!ct.value)){if(travelSetField('f-city','KUALA LUMPUR'))auto.push('城市 KUALA LUMPUR')}
     var pc=document.getElementById('f-postcode');
-    if(pc&&!pc.value){if(travelSetField('f-postcode',h.pc))auto.push('邮编 '+h.pc)}
+    if(pc&&(force||!pc.value)){if(travelSetField('f-postcode',h.pc))auto.push('邮编 '+h.pc)}
   }
   var ac=document.getElementById('f-accom');
-  if(ac&&!ac.value){if(travelSetField('f-accom','01'))auto.push('住宿类型 酒店')}
+  if(ac&&(force||!ac.value)){if(travelSetField('f-accom','01'))auto.push('住宿类型 酒店')}
   if(auto.length)done.push('自动生成：'+auto.join('；'));
   return done;
 }
