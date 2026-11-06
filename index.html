@@ -803,15 +803,11 @@ function restoreDraft(){
 /* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
 var VERIFIED_PROFILE={passport:'',name:'',dob:'',sex:'',passportExp:'',nationality:'',pob:''};
 function seedVerifiedProfile(){
-  var n=0;
+  // 仅做历史错号迁移，不再对空白表单预填内置资料（在线版构建时会整体清空，页面为空白启动）
   // 旧版误识别值兼容处理
-  ['passport','name','dob','sex','passportExp','nationality','pob'].forEach(function(k){
-    var el=document.getElementById(IN_IDS[k]);
-    var cur=el?String(el.value||'').trim():'';
-    if(el&&(!cur||cur==='E22246333')){el.value=VERIFIED_PROFILE[k];n++}
-  });
-  if(n)saveDraftLocal();
-  return n;
+  var el=document.getElementById(IN_IDS['passport']);
+  if(el&&String(el.value||'').trim()==='E22246333'){el.value=VERIFIED_PROFILE.passport;saveDraftLocal();return 1}
+  return 0;
 }
 
 /* ===== 校验 ===== */
