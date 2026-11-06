@@ -483,8 +483,12 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <div class="ocr-zone" id="travelZone" style="margin:16px 0 0;padding:22px 16px">
           <input type="file" id="travelFile" accept="image/*" multiple>
           <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M21.5 12L3 5l3.5 14 5.5-3.5 3 3.5 1.5-4.5L21.5 12z" stroke="#FFC72C" stroke-width="2" stroke-linejoin="round"/><path d="M21.5 12L9 15" stroke="#FFC72C" stroke-width="2"/></svg></div>
-          <b>上传机票 / 酒店订单截图，自动识别行程</b>
-          <span>去程机票、返程机票、酒店订单各一张，可一次多选 · 自动填入抵达/离境日期、航班号、住宿地址、州属、邮编、城市 · Click or drag screenshots</span>
+          <b>上传去程机票截图，自动识别行程</b>
+          <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别后自动生成（可修改） · Click or drag screenshots</span>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn btn-line btn-sm" id="autoGenTravel">无截图？一键生成返程 + 吉隆坡酒店</button>
+          <span style="font-size:12px;color:var(--mut-2)">自动生成的返程与酒店信息仅供占位，提交前请核对修改</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
         <div class="grid">
@@ -1359,6 +1363,58 @@ function travelSetField(id,val){
   el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));
   return true;
 }
+/* 返程 / 酒店自动生成（无需截图）：返程日期=抵达日期+7~9天随机，随机吉隆坡真实酒店 */
+var KL_HOTELS=[
+  {name:'Hilton Kuala Lumpur',street:'3 Jalan Stesen Sentral',pc:'50470'},
+  {name:'Mandarin Oriental Kuala Lumpur',street:'Kuala Lumpur City Centre',pc:'50088'},
+  {name:'Grand Hyatt Kuala Lumpur',street:'12 Jalan Pinang',pc:'50450'},
+  {name:'JW Marriott Hotel Kuala Lumpur',street:'183 Jalan Bukit Bintang',pc:'55100'},
+  {name:'The Majestic Hotel Kuala Lumpur',street:'5 Jalan Sultan Hishamuddin',pc:'50000'},
+  {name:'InterContinental Kuala Lumpur',street:'165 Jalan Ampang',pc:'50450'},
+  {name:'Sheraton Imperial Kuala Lumpur Hotel',street:'Jalan Sultan Ismail',pc:'50250'},
+  {name:'Aloft Kuala Lumpur Sentral',street:'No 5 Jalan Stesen Sentral',pc:'50470'},
+  {name:'Pullman Kuala Lumpur City Centre',street:'4 Jalan Conlay',pc:'50450'},
+  {name:'W Kuala Lumpur',street:'121 Jalan Ampang',pc:'50450'}
+];
+var AIR_PREFIX=['MH','AK','D7','OD','CZ','MU','TG','FD'];
+function randInt(a,b){return a+Math.floor(Math.random()*(b-a+1))}
+function dstr(dt){var m=dt.getMonth()+1,dd=dt.getDate();return dt.getFullYear()+'-'+(m<10?'0'+m:m)+'-'+(dd<10?'0'+dd:dd)}
+function autoGenReturnHotel(){
+  var done=[],auto=[];
+  var arr=document.getElementById('f-arrival').value;
+  var base=arr?new Date(arr+'T00:00:00'):new Date();
+  if(!arr){base.setDate(base.getDate()+1)}
+  var depEl=document.getElementById('f-departure');
+  if(depEl&&!depEl.value){
+    var d=new Date(base.getTime());d.setDate(d.getDate()+7+randInt(0,2));
+    var iso=dstr(d);
+    if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
+  }
+  var df=document.getElementById('f-deptflight');
+  if(df&&!df.value){
+    var fn=AIR_PREFIX[randInt(0,AIR_PREFIX.length-1)]+(''+randInt(100,9999));
+    if(travelSetField('f-deptflight',fn))auto.push('离境航班 '+fn);
+  }
+  var h=KL_HOTELS[randInt(0,KL_HOTELS.length-1)];
+  if(!document.getElementById('f-address').value){
+    if(travelSetField('f-address',h.name))auto.push('酒店 '+h.name);
+  }
+  if(!document.getElementById('f-address2').value){
+    travelSetField('f-address2',h.street);
+  }
+  if(DEST!=='TH'){
+    var st=document.getElementById('f-state');
+    if(st&&!st.value){if(travelSetField('f-state','14'))auto.push('州属 W.P. Kuala Lumpur')}
+    var ct=document.getElementById('f-city');
+    if(ct&&!ct.value){if(travelSetField('f-city','KUALA LUMPUR'))auto.push('城市 KUALA LUMPUR')}
+    var pc=document.getElementById('f-postcode');
+    if(pc&&!pc.value){if(travelSetField('f-postcode',h.pc))auto.push('邮编 '+h.pc)}
+  }
+  var ac=document.getElementById('f-accom');
+  if(ac&&!ac.value){if(travelSetField('f-accom','01'))auto.push('住宿类型 酒店')}
+  if(auto.length)done.push('自动生成：'+auto.join('；'));
+  return done;
+}
 /* 酒店/地址文本 → 州代码+城市（sq 为去除空白后的文本） */
 function pickStateCity(sq){
   if(!sq)return null;
@@ -1463,12 +1519,16 @@ function applyTravelTexts(texts){
     var hc=firstDate(hotel);
     if(hc&&!document.getElementById('f-arrival').value){if(travelSetField('f-arrival',hc))done.push('入住日期 '+hc)}
   }
+  var ag=autoGenReturnHotel();
+  if(ag.length)done=done.concat(ag);
   var today=new Date().toISOString().slice(0,10);
   var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
   if(av&&av<today)warn.push('识别到的抵达日期 '+av+' 已过去，请点开日期修改');
   if(dv&&dv<today)warn.push('识别到的离境日期 '+dv+' 已过去，请点开日期修改');
   if(!done.length){setTravel('没认出行程信息，请试试更清晰的截图，或手动填写 Nothing recognized','bad');return}
-  var msg='已识别并填入：'+done.join('；')+'。请核对，可直接修改。';
+  var autoOnly=done.every(function(s){return s.indexOf('自动生成')===0});
+  var msg=(autoOnly?'已自动填入：':'已识别并填入：')+done.join('；')+'。请核对，可直接修改。';
+  if(autoOnly)msg+='（返程与酒店为自动生成示例，提交前请核对）';
   if(warn.length)msg+=' ⚠ '+warn.join('；');
   setTravel(msg,warn.length?'bad':'ok');
 }
@@ -2343,6 +2403,14 @@ function init(){
   $('#travelFile').addEventListener('change',function(){
     if(this.files&&this.files.length)handleTravelFiles(this.files);
     this.value='';
+  });
+  $('#autoGenTravel').addEventListener('click',function(){
+    var done=autoGenReturnHotel();
+    if(done.length){
+      setTravel('已自动填入：'+done.join('；')+'（示例占位，请核对修改）','ok');
+    }else{
+      setTravel('返程与酒店信息已存在，无需重复生成 Already filled','ok');
+    }
   });
   var tz=$('#travelZone');
   tz.addEventListener('dragover',function(e){e.preventDefault();tz.classList.add('dragover')});
