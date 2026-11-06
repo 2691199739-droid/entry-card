@@ -164,11 +164,40 @@ function bmMy(d,maxTries){
     });
   }
   var tries=0;
+  /* 官网首页弹公告/广告弹窗（Bootstrap modal）：多策略自动关闭，避免挡住 REGISTER */
+  function closeModals(){
+    try{
+      var m=document.getElementById('myModal');
+      if(m&&m.classList&&m.classList.contains('in')){
+        try{ if(window.jQuery){window.jQuery('#myModal').modal('hide')} }catch(e){}
+        var cs=m.querySelectorAll('.close,[data-dismiss="modal"]');
+        for(var i=0;i<cs.length;i++){try{cs[i].click()}catch(e){}}
+        try{
+          m.classList.remove('in');
+          m.style.display='none';
+          document.body.classList.remove('modal-open');
+          var bd=document.querySelectorAll('.modal-backdrop');
+          for(var j=0;j<bd.length;j++){try{bd[j].remove()}catch(e){}}
+        }catch(e){}
+      }
+      /* 页面可能不止一个公告弹窗：其它可见 modal 同样处理 */
+      var others=document.querySelectorAll('.modal.in:not(#myModal), .modal.show');
+      for(var k=0;k<others.length;k++){
+        var o=others[k];
+        try{
+          var c2=o.querySelectorAll('.close,[data-dismiss="modal"]');
+          for(var q=0;q<c2.length;q++){try{c2[q].click()}catch(e){}}
+          try{o.classList.remove('in');o.classList.remove('show');o.style.display='none'}catch(e){}
+        }catch(e){}
+      }
+    }catch(e){}
+  }
   var t=setInterval(function(){
     tries++;
+    closeModals();
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
-    if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（先关闭广告/弹窗，再点官网 REGISTER 进入表单页）',true)}
-    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
+    if(tries===1){note('MDAC 助手已就绪：公告弹窗将自动关闭，请点官网 REGISTER 进入申报表单页，表单一出现即自动填入',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。若页面仍被弹窗遮挡，请点弹窗右上角 ×；再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
 function bmTh(d){
