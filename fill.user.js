@@ -22,6 +22,29 @@ function bmMy(d){
   function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
   function ss(i,v){var e=g(i);if(!e||!v)return 0;return ssEl(e,v)}
   function ssEl(e,v){if(!e||!v)return 0;var val=String(v).toUpperCase().replace(/\s+/g,'');var words=String(v).toUpperCase().split(/\s+/).filter(Boolean);var o=e.options;if(!o)return 0;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase().replace(/\s+/g,'');var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();var otc=ot.replace(/\s+/g,'');if(ov===val||otc===val||ot.indexOf(String(v).toUpperCase())>-1||ov.indexOf(val)>-1||otc.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}for(var k=0;k<o.length;k++){var tt=String(o[k].text).toUpperCase();if(words.length&&words.every(function(w){return tt.indexOf(w)>-1})){e.value=o[k].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
+  /* 州代码→官方名称关键词（官方州下拉是名称体系，如 WP KUALA LUMPUR） */
+  var MY_STATE_ALIAS={'01':['JOHOR'],'02':['KEDAH'],'03':['KELANTAN'],'04':['MELAKA','MALACCA'],'05':['NEGERI SEMBILAN','SEMBILAN'],'06':['PAHANG'],'07':['PULAU PINANG','PENANG'],'08':['PERAK'],'09':['PERLIS'],'10':['SELANGOR'],'11':['TERENGGANU'],'12':['SABAH'],'13':['SARAWAK'],'14':['KUALA LUMPUR'],'15':['LABUAN'],'16':['PUTRAJAYA']};
+  /* 中文城市/常用缩写 → 英文（官方城市列表是英文） */
+  var MY_CITY_CN2EN={'KL':'KUALA LUMPUR','吉隆坡':'KUALA LUMPUR','槟城':'PENANG','乔治市':'GEORGE TOWN','乔治敦':'GEORGE TOWN','马六甲':'MELAKA','新山':'JOHOR BAHRU','莎阿南':'SHAH ALAM','八打灵再也':'PETALING JAYA','梳邦再也':'SUBANG JAYA','巴生':'KLANG','布城':'PUTRAJAYA','亚庇':'KOTA KINABALU','古晋':'KUCHING','仙本那':'SEMPORNA','兰卡威':'LANGKAWI','云顶':'GENTING HIGHLANDS','怡保':'IPOH','芙蓉':'SEREMBAN','关丹':'KUANTAN'};
+  function ssKw(e,words){if(!e||!e.options||!words||!words.length)return 0;var o=e.options;for(var wi=0;wi<words.length;wi++){var w=String(words[wi]).toUpperCase().replace(/\s+/g,' ').trim();if(!w)continue;for(var j=0;j<o.length;j++){var t=String(o[j].text||'').toUpperCase().replace(/\s+/g,' ').trim();if(t&&(t===w||t.indexOf(w)>-1)){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}}return 0}
+  function cityKw(city){if(!city)return[];var s=String(city).trim();var en=MY_CITY_CN2EN[s]||s;return String(en).toUpperCase().split(/[\s,，/]+/).filter(Boolean)}
+  function fillState(D){
+    var e=g('accommodationState');
+    if(!e||!D.state)return 0;
+    var key=String(D.state).trim();
+    var words=MY_STATE_ALIAS[key];
+    if(words&&ssKw(e,words))return 1;
+    if(ss('accommodationState',D.state))return 1;
+    if(!/^\d+$/.test(key)&&ssKw(e,[key]))return 1;
+    return 0;
+  }
+  function ssKwPc(e,words,pc){if(!e||!e.options)return 0;var o=e.options,hits=[];for(var j=0;j<o.length;j++){var t=String(o[j].text||'').toUpperCase().replace(/\s+/g,' ').trim();if(t&&words&&words.length&&words.every(function(w){return t.indexOf(w)>-1}))hits.push(j)}if(!hits.length)return 0;var pick=hits[0];if(pc){var pcS=String(pc).trim();for(var k=0;k<hits.length;k++){if(String(o[hits[k]].text).indexOf(pcS)>-1){pick=hits[k];break}}}e.value=o[pick].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+  function fillCity(D){
+    var ck=cityKw(D.city);
+    if(ssKwPc(g('accommodationCity'),ck,D.postcode))return 1;
+    if(ss('accommodationCity',D.city))return 1;
+    return tryCityAny(D);
+  }
   function tryCityAny(D){
     /* 兜底：官方页 City 不一定有 id，按标签文本（city / bandar / daerah）全页找并填 */
     if(!D.city)return 0;
@@ -33,12 +56,12 @@ function bmMy(d){
       try{if(e.closest('td')&&e.closest('td').previousElementSibling)lb+=' '+e.closest('td').previousElementSibling.textContent}catch(x2){}
       lb=(lb||'').toLowerCase();
       if(lb.indexOf('city')>-1||lb.indexOf('town')>-1||lb.indexOf('bandar')>-1||lb.indexOf('daerah')>-1||lb.indexOf('district')>-1||lb.indexOf('pekan')>-1||lb.indexOf('kota')>-1||lb.indexOf('mukim')>-1){
-        if(e.tagName==='SELECT'){if(ssEl(e,D.city))return 1}
-        else{e.value=D.city;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+        if(e.tagName==='SELECT'){if(ssKw(e,cityKw(D.city))||ssEl(e,D.city))return 1}
+        else{var cv=cityKw(D.city);e.value=cv.length?cv.join(' '):D.city;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
       }
     }
     /* Angular / 自定义下拉：label 含 city 的容器里找可点元素展开后选可见选项 */
-    var words=String(D.city).toUpperCase().split(/\s+/).filter(Boolean);
+    var words=cityKw(D.city);
     var labels=[].slice.call(document.querySelectorAll('label'));
     for(var i=0;i<labels.length;i++){
       var t=(labels[i].textContent||'').toLowerCase();
@@ -71,19 +94,16 @@ function bmMy(d){
       setTimeout(function(){
         if(D.region&&g('region')&&!g('region').value){if(ss('region',D.region))n++}
         if(!D.state){res({n:n,miss:miss});return}
-        if(ss('accommodationState',D.state)){
+        if(fillState(D)){
           n++;
           var tries=0,cok=0,counted=false;
           var t=setInterval(function(){
             tries++;
-            if(!cok&&D.city){
-              cok=ss('accommodationCity',D.city);
-              if(!cok)cok=tryCityAny(D);
-            }
+            if(!cok&&D.city){cok=fillCity(D)}
             if(cok&&!counted){counted=true;n++}
             if(cok||tries>=40){
               clearInterval(t);
-              if(!cok&&D.city){cok=tryCityAny(D)}
+              if(!cok&&D.city){cok=fillCity(D)}
               if(!cok&&D.postcode&&g('accommodationPostcode')&&!g('accommodationPostcode').value){if(st('accommodationPostcode',D.postcode))n++}
               if(!cok)miss.push('accommodationCity');
               res({n:n,miss:miss});
