@@ -620,7 +620,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
       <b>手机自动填表（已装 Stay 扩展）</b>——推荐用「一键跳转」，全程无需复制粘贴：
       <ol style="margin:8px 0 4px;padding-left:20px">
         <li>勾选上方确认声明，点「② 一键跳转自动填表」→ 自动打开官方页并带上填表码。</li>
-        <li>马来西亚官网：点官网菜单的 <b>REGISTER</b> 进入申报表单页；泰国官网：完成人机验证并点 <b>Arrival Card</b>。表单一出现，资料<b>自动填入</b>，无需粘贴。</li>
+        <li>马来西亚官网：先关闭广告/弹窗，点官网菜单的 <b>REGISTER</b> 进入申报表单页；泰国官网：完成人机验证并点 <b>Arrival Card</b>。表单一出现，资料<b>自动填入</b>，无需粘贴。</li>
         <li>核对后由你在官方页面亲自提交。若自动填入没触发，点右下角「自动填表」按钮走粘贴方式。</li>
       </ol>
       <div style="margin-top:10px">
@@ -2173,8 +2173,8 @@ function bmMy(d,maxTries){
   var t=setInterval(function(){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
-    if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（在官网首页请点 REGISTER 进入表单页）',true)}
-    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。若还在官网首页，请点 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
+    if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（先关闭广告/弹窗，再点官网 REGISTER 进入表单页）',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
   },1500);
 }
 function bmTh(d){
@@ -2447,7 +2447,7 @@ function init(){
       :'https://imigresen-online.imi.gov.my/mdac/main')+'#mdacfill='+encodeURIComponent(code);
     toast(DEST==='TH'
       ?'已跳转泰国官方页：完成人机验证并点 Arrival Card，表单一出现即自动填入'
-      :'已跳转马来西亚官网：点官网菜单 REGISTER 进入申报表单页，表单一出现即自动填入');
+      :'已跳转马来西亚官网：先关闭广告/弹窗，再点官网菜单 REGISTER 进入申报表单页，表单一出现即自动填入');
     try{window.open(url,'_blank')}catch(e){location.href=url}
   });
   $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
