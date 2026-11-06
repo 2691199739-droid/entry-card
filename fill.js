@@ -9,7 +9,7 @@ function bmMy(d,maxTries){
     if(!s)banner._t=setTimeout(function(){banner.remove();banner=null},8000);
   }
   function g(i){return document.getElementById(i)}
-  function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+  function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;if(e.type==='date'&&!e.value)e.value=String(v).split('/').reverse().join('-');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return String(e.value)===String(v)?1:0}
   function ss(i,v){var e=g(i);if(!e||!v)return 0;return ssEl(e,v)}
   function ssEl(e,v){if(!e||!v)return 0;var val=String(v).toUpperCase().replace(/\s+/g,'');var words=String(v).toUpperCase().split(/\s+/).filter(Boolean);var o=e.options;if(!o)return 0;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase().replace(/\s+/g,'');var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();var otc=ot.replace(/\s+/g,'');if(ov===val||otc===val||ot.indexOf(String(v).toUpperCase())>-1||ov.indexOf(val)>-1||otc.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}for(var k=0;k<o.length;k++){var tt=String(o[k].text).toUpperCase();if(words.length&&words.every(function(w){return tt.indexOf(w)>-1})){e.value=o[k].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
   /* 州代码→官方名称关键词（官方州下拉是名称体系，如 WP KUALA LUMPUR） */
@@ -145,13 +145,20 @@ function bmMy(d,maxTries){
     closeModals();
     var D=mapData(d);
     note('MDAC 助手正在自动填入…',true);
-    var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
-    p.then(function(r){
-      var m='MDAC 助手：已自动填入 '+r.n+' 项';
-      if(r.miss&&r.miss.length)m+='；未填入：'+r.miss.join(', ')+'，请手动补填';
-      m+='。请核对后自行提交。';
-      note(m,true);
-    });
+    /* 官网表单在填写过程中会重渲染（国家/日期联动），一轮填不全就补填，最多 5 轮 */
+    var round=0;
+    function run(){
+      round++;
+      var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
+      p.then(function(r){
+        if(round<5&&r.miss&&r.miss.length){setTimeout(run,1200);return}
+        var m=r.miss&&r.miss.length
+          ?('MDAC 助手：已自动填入，未能填入：'+r.miss.join(', ')+'，请手动补填。请核对后自行提交。')
+          :'MDAC 助手：已自动填入全部资料。请核对后自行提交。';
+        note(m,true);
+      });
+    }
+    run();
   }
   var tries=0;
   /* 官网首页弹公告/广告弹窗（Bootstrap modal）：多策略自动关闭，避免挡住 REGISTER */
