@@ -787,6 +787,13 @@ function saveDraftLocal(){
   clearTimeout(draftTimer);
   draftTimer=setTimeout(function(){try{localStorage.setItem('mdac_draft',JSON.stringify(readDraft()))}catch(e){}},400);
 }
+/* 清空行程类字段（刷新后需重新扫描行程；安卓 Firefox 会恢复表单旧值，需在恢复后再清一次） */
+function clearTravelFields(){
+  ['arrival','departure','deptflight','flight','mode','lastPort'].forEach(function(k){
+    var el=document.getElementById(IN_IDS[k]);
+    if(el){el.value='';try{el.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}}
+  });
+}
 function restoreDraft(){
   try{
     var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');
@@ -796,6 +803,7 @@ function restoreDraft(){
       writeDraft(d);
     }
   }catch(e){}
+  clearTravelFields();
   // 酒店为随机示例：每次加载页面重新随机换一组
   try{autoGenHotel(true)}catch(e0){}
 }
@@ -1561,6 +1569,11 @@ function applyTravelTexts(texts){
     var hc=firstDate(hotel);
     if(hc&&!document.getElementById('f-arrival').value){if(travelSetField('f-arrival',hc))done.push('入住日期 '+hc)}
   }
+  if(!document.getElementById('f-arrival').value){
+    var a0=new Date();a0.setDate(a0.getDate()+3);
+    var aIso=dstr(a0);
+    if(travelSetField('f-arrival',aIso))done.push('自动生成：抵达 '+aIso+'（未识别到行程日期，请核对修改）');
+  }
   var ag=autoGenReturnHotel();
   if(ag.length)done=done.concat(ag);
   var today=new Date().toISOString().slice(0,10);
@@ -1570,7 +1583,7 @@ function applyTravelTexts(texts){
   if(!done.length){setTravel('没认出行程信息，请试试更清晰的截图，或手动填写 Nothing recognized','bad');return}
   var autoOnly=done.every(function(s){return s.indexOf('自动生成')===0});
   var msg=(autoOnly?'已自动填入：':'已识别并填入：')+done.join('；')+'。请核对，可直接修改。';
-  if(autoOnly)msg+='（返程与酒店为自动生成示例，提交前请核对）';
+  if(autoOnly)msg+='（部分行程为自动生成示例，提交前请核对）';
   if(warn.length)msg+=' ⚠ '+warn.join('；');
   setTravel(msg,warn.length?'bad':'ok');
 }
@@ -2419,6 +2432,10 @@ function init(){
   });
   fillCountrySelects();
   restoreDraft();
+  /* 安卓 Firefox 刷新/重载会恢复表单旧值（form restoration）：在页面重载完成后再次清空行程字段 */
+  window.addEventListener('pageshow',function(e){
+    if(!e.persisted){setTimeout(clearTravelFields,300)}
+  });
   applyDestUI();
   var seeded=seedVerifiedProfile();
   $('#f-arrival').min=todayISO();
