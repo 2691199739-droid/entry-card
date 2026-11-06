@@ -1527,6 +1527,19 @@ function applyTravelTexts(texts){
     var codes=seg.match(/[A-Z]{2}\d{3,4}/g);
     var fn=codes?codes[codes.length-1]:null;
     if(!fn){var all2=sq.match(/[A-Z]{2}\d{3,4}/g);if(all2)fn=all2[all2.length-1]}
+    if(!fn){
+      // 中转/多段订单：航班号分散在相邻行（inbound 行往往只有「日期 + 城市对」），
+      // 从全部识别文本里排除「实际承运」等备注行后，取最后一个航班号（即抵达目的地的航段）
+      var cands=[];
+      texts.forEach(function(t2){
+        if(t2===inbound||t2===ret||t2===hotel)return;
+        var s2=squash(t2);
+        if(/承运|共享/.test(s2))return;
+        var cs=s2.match(/[A-Z]{2}\d{3,4}/g);
+        if(cs){for(var c=0;c<cs.length;c++)cands.push(cs[c])}
+      });
+      if(cands.length)fn=cands[cands.length-1];
+    }
     if(fn){travelSetField('f-flight',fn);done.push('航班 '+fn)}
     if(travelSetField('f-mode','Air'))done.push('出行方式 Air');
   }
