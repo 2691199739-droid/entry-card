@@ -786,8 +786,15 @@ function saveDraftLocal(){
   draftTimer=setTimeout(function(){try{localStorage.setItem('mdac_draft',JSON.stringify(readDraft()))}catch(e){}},400);
 }
 function restoreDraft(){
-  try{var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');if(d)writeDraft(d)}catch(e){}
-  // 酒店为随机示例：每次加载页面重新随机换一组；抵达与返程保持默认空（扫描到去程机票后自动录入）
+  try{
+    var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');
+    if(d){
+      // 刷新时清空行程数据：抵达/返程回默认空（需重新扫描），护照信息保留
+      delete d.arrival;delete d.departure;delete d.deptflight;
+      writeDraft(d);
+    }
+  }catch(e){}
+  // 酒店为随机示例：每次加载页面重新随机换一组
   try{autoGenHotel(true)}catch(e0){}
 }
 
