@@ -2160,6 +2160,7 @@ function bmMy(d,maxTries){
     return Promise.resolve({n:n,miss:[]});
   }
   function doFill(){
+    closeModals();
     var D=mapData(d);
     note('MDAC 助手正在自动填入…',true);
     var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
@@ -2199,11 +2200,30 @@ function bmMy(d,maxTries){
       }
     }catch(e){}
   }
+  /* 公告弹窗关掉后，自动点击 REGISTER / REGISTRATION 进入申报表单页（8 秒节流防重复点） */
+  function clickRegister(){
+    try{
+      var now=+new Date();
+      if(window.__regLastClick && now-window.__regLastClick<8000)return false;
+      var btns=document.querySelectorAll('button,a,[role="button"]');
+      for(var i=0;i<btns.length;i++){
+        var b=btns[i];
+        var t=(b.textContent||'').trim().toUpperCase().replace(/\s+/g,' ');
+        if(t==='REGISTER'||t==='REGISTRATION'){
+          window.__regLastClick=now;
+          b.click();
+          return true;
+        }
+      }
+    }catch(e){}
+    return false;
+  }
   var t=setInterval(function(){
     tries++;
     closeModals();
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
-    if(tries===1){note('MDAC 助手已就绪：公告弹窗将自动关闭，请点官网 REGISTER 进入申报表单页，表单一出现即自动填入',true)}
+    clickRegister();
+    if(tries===1){note('MDAC 助手已就绪：公告弹窗将自动关闭，并自动点击 REGISTER 进入申报表单页，表单一出现即自动填入',true)}
     if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。若页面仍被弹窗遮挡，请点弹窗右上角 ×；再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
