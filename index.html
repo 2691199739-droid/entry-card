@@ -787,8 +787,8 @@ function saveDraftLocal(){
 }
 function restoreDraft(){
   try{var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');if(d)writeDraft(d)}catch(e){}
-  // 返程与酒店为随机示例信息：每次加载页面重新随机换一组（用户要求刷新即变）
-  try{autoGenReturnHotel(true)}catch(e0){}
+  // 酒店为随机示例：每次加载页面重新随机换一组；抵达与返程保持默认空（扫描到去程机票后自动录入）
+  try{autoGenHotel(true)}catch(e0){}
 }
 
 /* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
@@ -1403,22 +1403,8 @@ function randDeptFlight(){
 }
 function randInt(a,b){return a+Math.floor(Math.random()*(b-a+1))}
 function dstr(dt){var m=dt.getMonth()+1,dd=dt.getDate();return dt.getFullYear()+'-'+(m<10?'0'+m:m)+'-'+(dd<10?'0'+dd:dd)}
-function autoGenReturnHotel(force){
+function autoGenHotel(force){
   var done=[],auto=[];
-  var arr=document.getElementById('f-arrival').value;
-  var depEl=document.getElementById('f-departure');
-  // 返程依赖抵达日期作基准：无抵达日期时不自动生成，避免乱刷出离境信息
-  if(arr&&depEl&&(force||!depEl.value)){
-    var base=new Date(arr+'T00:00:00');
-    var d=new Date(base.getTime());d.setDate(d.getDate()+7+randInt(0,2));
-    var iso=dstr(d);
-    if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
-  }
-  var df=document.getElementById('f-deptflight');
-  if(arr&&df&&(force||!df.value)){
-    var fl=randDeptFlight();
-    if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
-  }
   var h=KL_HOTELS[randInt(0,KL_HOTELS.length-1)];
   if(force||!document.getElementById('f-address').value){
     if(travelSetField('f-address',h.name))auto.push('酒店 '+h.name);
@@ -1437,6 +1423,27 @@ function autoGenReturnHotel(force){
   var ac=document.getElementById('f-accom');
   if(ac&&(force||!ac.value)){if(travelSetField('f-accom','01'))auto.push('住宿类型 酒店')}
   if(auto.length)done.push('自动生成：'+auto.join('；'));
+  return done;
+}
+function autoGenReturnHotel(force){
+  var done=[],auto=[];
+  var arr=document.getElementById('f-arrival').value;
+  var depEl=document.getElementById('f-departure');
+  // 返程依赖抵达日期作基准：仅在识别到抵达日期后自动生成（默认保持为空）
+  if(arr&&depEl&&(force||!depEl.value)){
+    var base=new Date(arr+'T00:00:00');
+    var d=new Date(base.getTime());d.setDate(d.getDate()+7+randInt(0,2));
+    var iso=dstr(d);
+    if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
+  }
+  var df=document.getElementById('f-deptflight');
+  if(arr&&df&&(force||!df.value)){
+    var fl=randDeptFlight();
+    if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
+  }
+  if(auto.length)done.push('自动生成：'+auto.join('；'));
+  var hd=autoGenHotel(false);
+  if(hd.length)done=done.concat(hd);
   return done;
 }
 /* 酒店/地址文本 → 州代码+城市（sq 为去除空白后的文本） */
@@ -1488,12 +1495,17 @@ function applyTravelTexts(texts){
     return y+'-'+(m1<10?'0'+m1:m1)+'-'+(m2<10?'0'+m2:m2);
   }
   function firstDate(t){
-    var m=squash(t).match(/(\d{1,2})月(\d{1,2})日/);
+    // 「月/日」可能被 OCR 误识为 H/口/0 等形近字符，如「11月08日」→「11H08H」
+    var m=squash(t).match(/(\d{1,2})[月H冃目](\d{1,2})[日H口曰0O]/);
     return m?mdacDate(+m[1],+m[2]):null;
   }
   if(inbound){
     var sq=squash(inbound);
     var d=firstDate(inbound);
+    // 日期行与航线行分开的票面：从其他行找「月..日」作抵达日期兜底
+    if(!d){
+      texts.forEach(function(t){if(d)return;if(t===inbound||t===ret||t===hotel)return;var dd=firstDate(t);if(dd)d=dd;});
+    }
     if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
     if(inbOrg){
       var trn=squash(inbound).match(/中转([\u4e00-\u9fa5]{2,6})/);
