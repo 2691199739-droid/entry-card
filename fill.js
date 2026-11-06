@@ -1,6 +1,8 @@
 /* 入境卡助手 · 官方表单填表器 fill.js — 由 publish-build.py 自动生成，勿手改
-   用法：在官方申报表单页点右下角「自动填表」按钮（Stay 扩展加载本文件）→ 粘贴填表码 → 自动填入 */
-function bmMy(d){
+   用法：官方申报表单页点右下角「自动填表」按钮（Stay 扩展加载本文件）→ 粘贴填表码 → 自动填入；
+   或由助手页「一键跳转」带 #mdacfill= 码打开官方页 → 自动读取并填入（无需粘贴） */
+function bmMy(d,maxTries){
+  var MT=maxTries||30;
   var banner=null;
   function note(m,s){
     if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';document.body.appendChild(banner)}
@@ -155,8 +157,8 @@ function bmMy(d){
   var t=setInterval(function(){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
-    if(tries===1){note('MDAC 助手已就绪：等待官方表单加载完成后自动填入…',true)}
-    if(tries>=30){clearInterval(t);note('MDAC 助手：约 45 秒内未检测到表单，请确认已打开 MDAC 申报页后重新点「自动填表」按钮',true)}
+    if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（在官网首页请点 REGISTER 进入表单页）',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。若还在官网首页，请点 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
   },1500);
 }
 function bmTh(d){
@@ -333,21 +335,51 @@ function bmTh(d){
 }
 (function(){
   function bail(m){try{alert(m)}catch(e){}}
-  window.__entryFill=function(){
+  function dec(t){
+    var d=null;
+    try{d=JSON.parse(decodeURIComponent(escape(atob(t))))}catch(e){}
+    return d;
+  }
+  /* 一键跳转：链接 #mdacfill= 里的填表码存入 sessionStorage，跨 REGISTER 整页跳转不丢 */
+  function pickAuto(){
+    var d=null;
     try{
-      if(!document.body){bail('页面还没加载完：请等表单完全显示后再点「自动填表」按钮');return}
-      var c=null;
-      try{c=prompt('入境卡填表：请长按粘贴填表码（已在助手页面点「生成填表码」复制）','')}catch(e){}
-      if(!c||!String(c).trim())return;
-      var t=String(c).trim();
-      var d=null;
-      try{d=JSON.parse(decodeURIComponent(escape(atob(t))))}catch(e){}
-      if(!d||!d.passport){bail('填表码无效：请回到入境卡助手页面，重新点「生成填表码」复制后再试');return}
-      var isMY=!!(document.getElementById('name')&&document.getElementById('passNo'));
-      var isTH=false;
-      try{isTH=!!document.querySelector('[formcontrolname=passportNo]')}catch(e){}
-      if(d.dest==='TH'?!isTH:!isMY){bail('当前页面不是申报表单页：请先在官网点 REGISTER / Apply 按钮进入表单页，等表单完全显示后再点右下角「自动填表」按钮');return}
-      (d.dest==='TH'?bmTh:bmMy)(d);
+      var hm=location.hash.match(/mdacfill=([^&#]*)/);
+      if(hm){
+        var raw='';
+        try{raw=decodeURIComponent(hm[1])}catch(e){raw=hm[1]}
+        if(raw){
+          d=dec(raw);
+          if(d&&d.passport){try{sessionStorage.setItem('mdac_fill',raw)}catch(e){}}
+        }
+      }
+    }catch(e){}
+    if(!d||!d.passport){
+      try{
+        var sv=sessionStorage.getItem('mdac_fill');
+        if(sv){d=dec(sv)}
+      }catch(e){}
+    }
+    return (d&&d.passport)?d:null;
+  }
+  window.__entryFill=function(autoMode){
+    try{
+      if(!document.body){bail('页面还没加载完：请等页面完全显示后再试');return}
+      var d=pickAuto();
+      if(!d&&!autoMode){
+        var c=null;
+        try{c=prompt('入境卡填表：请长按粘贴填表码（已在助手页面点「生成填表码」复制）','')}catch(e){}
+        if(!c||!String(c).trim())return;
+        d=dec(String(c).trim());
+        if(!d||!d.passport){bail('填表码无效：请回到入境卡助手页面，重新点「生成填表码」复制后再试');return}
+      }
+      if(!d)return;
+      if(d.dest==='TH'){
+        bmTh(d);
+        return;
+      }
+      /* 马来西亚：官网首页与表单页都会进入等待，REGISTER 后表单一出现即自动填入 */
+      bmMy(d,autoMode?180:30);
     }catch(e){bail('填表脚本出错：'+(e&&e.message?e.message:'未知错误')+'。请截图反馈给管理员')}
   };
   if(window.__entryFillLoaded){window.__entryFill()}else{window.__entryFillLoaded=1;window.__entryFill()}
