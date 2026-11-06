@@ -789,8 +789,8 @@ function restoreDraft(){
   try{
     var d=JSON.parse(localStorage.getItem('mdac_draft')||'null');
     if(d){
-      // 刷新时清空行程数据：抵达/返程回默认空（需重新扫描），护照信息保留
-      delete d.arrival;delete d.departure;delete d.deptflight;
+      // 刷新时清空行程数据：抵达/返程/航班/出发方式/出发国家回默认空（需重新扫描），护照信息保留
+      delete d.arrival;delete d.departure;delete d.deptflight;delete d.flight;delete d.mode;delete d.lastPort;
       writeDraft(d);
     }
   }catch(e){}
