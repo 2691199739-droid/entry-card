@@ -20,7 +20,45 @@ function bmMy(d){
   }
   function g(i){return document.getElementById(i)}
   function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
-  function ss(i,v){var e=g(i);if(!e||!v)return 0;var val=String(v).toUpperCase();var o=e.options;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase();var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();if(ov===val||ot.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
+  function ss(i,v){var e=g(i);if(!e||!v)return 0;return ssEl(e,v)}
+  function ssEl(e,v){if(!e||!v)return 0;var val=String(v).toUpperCase().replace(/\s+/g,'');var words=String(v).toUpperCase().split(/\s+/).filter(Boolean);var o=e.options;if(!o)return 0;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase().replace(/\s+/g,'');var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();var otc=ot.replace(/\s+/g,'');if(ov===val||otc===val||ot.indexOf(String(v).toUpperCase())>-1||ov.indexOf(val)>-1||otc.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}for(var k=0;k<o.length;k++){var tt=String(o[k].text).toUpperCase();if(words.length&&words.every(function(w){return tt.indexOf(w)>-1})){e.value=o[k].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
+  function tryCityAny(D){
+    /* 兜底：官方页 City 不一定有 id，按标签文本（city / bandar / daerah）全页找并填 */
+    if(!D.city)return 0;
+    var els=[].slice.call(document.querySelectorAll('select,input:not([type=hidden]):not([type=button]):not([type=submit])'));
+    for(var k=0;k<els.length;k++){
+      var e=els[k];
+      var lb='';
+      try{var l=document.querySelector('label[for="'+e.id+'"]');if(l)lb=l.textContent}catch(x1){}
+      try{if(e.closest('td')&&e.closest('td').previousElementSibling)lb+=' '+e.closest('td').previousElementSibling.textContent}catch(x2){}
+      lb=(lb||'').toLowerCase();
+      if(lb.indexOf('city')>-1||lb.indexOf('town')>-1||lb.indexOf('bandar')>-1||lb.indexOf('daerah')>-1||lb.indexOf('district')>-1||lb.indexOf('pekan')>-1||lb.indexOf('kota')>-1||lb.indexOf('mukim')>-1){
+        if(e.tagName==='SELECT'){if(ssEl(e,D.city))return 1}
+        else{e.value=D.city;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
+      }
+    }
+    /* Angular / 自定义下拉：label 含 city 的容器里找可点元素展开后选可见选项 */
+    var words=String(D.city).toUpperCase().split(/\s+/).filter(Boolean);
+    var labels=[].slice.call(document.querySelectorAll('label'));
+    for(var i=0;i<labels.length;i++){
+      var t=(labels[i].textContent||'').toLowerCase();
+      if(t.indexOf('city')>-1||t.indexOf('town')>-1||t.indexOf('bandar')>-1||t.indexOf('district')>-1){
+        var wrap=labels[i].closest('.mat-form-field')||labels[i].parentElement;
+        if(!wrap)continue;
+        var trig=wrap.querySelector('[role=combobox],.mat-select,mat-select,button');
+        if(!trig)continue;
+        try{trig.click()}catch(e3){}
+        var opts=[].slice.call(document.querySelectorAll('mat-option,.mat-option,[role=option],li[class*="option"]'));
+        for(var m=0;m<opts.length;m++){
+          var om=opts[m];
+          try{if(om.getBoundingClientRect().height<5)continue}catch(e4){}
+          var st=(om.textContent||'').toUpperCase();
+          if(words.length&&words.every(function(w){return st.indexOf(w)>-1})){try{om.click()}catch(e5){}return 1}
+        }
+      }
+    }
+    return 0;
+  }
   function fmt(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
   function mapData(x){return{name:x.name,passNo:x.passport,dob:fmt(x.dob),nationality:x.nationality,pob:x.pob,sex:x.sex==='Male'?'1':(x.sex==='Female'?'2':''),passExp:fmt(x.passportExp),email:x.email,confirmEmail:x.email,region:x.ccode,mobile:x.mobile,arr:fmt(x.arrival),dep:fmt(x.departure),vessel:x.flight,mode:x.mode==='Air'?'1':(x.mode==='Land'?'2':(x.mode==='Sea'?'3':'')),embark:x.lastPort,stay:x.accommodation,addr1:x.address,addr2:x.address2||'',state:x.state,city:x.city,postcode:x.postcode}}
   function directFill(D){
@@ -38,10 +76,14 @@ function bmMy(d){
           var tries=0,cok=0,counted=false;
           var t=setInterval(function(){
             tries++;
-            if(!cok&&D.city)cok=ss('accommodationCity',D.city);
+            if(!cok&&D.city){
+              cok=ss('accommodationCity',D.city);
+              if(!cok)cok=tryCityAny(D);
+            }
             if(cok&&!counted){counted=true;n++}
-            if(cok||tries>=12){
+            if(cok||tries>=40){
               clearInterval(t);
+              if(!cok&&D.city){cok=tryCityAny(D)}
               if(!cok&&D.postcode&&g('accommodationPostcode')&&!g('accommodationPostcode').value){if(st('accommodationPostcode',D.postcode))n++}
               if(!cok)miss.push('accommodationCity');
               res({n:n,miss:miss});
