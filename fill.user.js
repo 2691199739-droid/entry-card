@@ -2,7 +2,7 @@
 // @name         入境卡自动填表（马来西亚 MDAC / 泰国 TDAC）
 // @namespace    https://2691199739-droid.github.io/entry-card/
 // @version      1.0.0
-// @description  配合「入境卡助手」使用：官方申报表单页右下角出现「自动填表」按钮，点击后粘贴填表码，全部资料自动填入。助手页面：https://2691199739-droid.github.io/entry-card/
+// @description  配合「入境卡助手」使用：从助手页点「一键跳转」带码打开官方页，进入申报表单后全部资料自动填入，无需粘贴。助手页面：https://2691199739-droid.github.io/entry-card/
 // @author       entry-card-helper
 // @match        https://imigresen-online.imi.gov.my/*
 // @match        https://tdac.immigration.go.th/*
@@ -10,8 +10,7 @@
 // @grant        none
 // ==/UserScript==
 /* 入境卡助手 · 官方表单填表器 fill.js — 由 publish-build.py 自动生成，勿手改
-   用法：官方申报表单页点右下角「自动填表」按钮（Stay 扩展加载本文件）→ 粘贴填表码 → 自动填入；
-   或由助手页「一键跳转」带 #mdacfill= 码打开官方页 → 自动读取并填入（无需粘贴） */
+   用法：由助手页「一键跳转」带 #mdacfill= 码打开官方页 → 自动读取并填入（无需粘贴） */
 function bmMy(d,maxTries){
   var MT=maxTries||30;
   var banner=null;
@@ -169,7 +168,7 @@ function bmMy(d,maxTries){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
     if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（先关闭广告/弹窗，再点官网 REGISTER 进入表单页）',true)}
-    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
 function bmTh(d){
@@ -396,16 +395,6 @@ function bmTh(d){
   window.__entryFillLoaded=1;
 })();
 (function(){
-  function mountBtn(){
-    if(document.getElementById('__entryFillBtn'))return;
-    var b=document.createElement('button');
-    b.id='__entryFillBtn';
-    b.type='button';
-    b.textContent='自动填表';
-    b.style.cssText='position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#0B2447;color:#fff;font:15px/1 system-ui,-apple-system,sans-serif;padding:13px 18px;border:0;border-radius:24px;box-shadow:0 6px 20px rgba(0,0,0,.35)';
-    b.addEventListener('click',function(){try{window.__entryFill&&window.__entryFill(false)}catch(e){alert('填表脚本出错：'+(e&&e.message?e.message:'未知'))}});
-    (document.body||document.documentElement).appendChild(b);
-  }
   /* 一键跳转自动填表：链接带 #mdacfill= 码（或本会话已存码）→ 不弹窗、直接等待表单并填入 */
   function autoRun(){
     try{
@@ -415,5 +404,5 @@ function bmTh(d){
       if(hm||sv){window.__entryFill&&window.__entryFill(true)}
     }catch(e){}
   }
-  if(document.body){mountBtn();autoRun()}else{document.addEventListener('DOMContentLoaded',function(){mountBtn();autoRun()})}
+  if(document.body){autoRun()}else{document.addEventListener('DOMContentLoaded',autoRun)}
 })();

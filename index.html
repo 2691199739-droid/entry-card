@@ -104,6 +104,8 @@ body.dest-th [data-f="passportExp"]{display:none}
 .btn:active{transform:translateY(1px)}
 .btn-yellow{background:var(--yellow);color:var(--navy);box-shadow:0 4px 14px rgba(240,176,0,.35)}
 .btn-yellow:hover{background:var(--yellow-d);box-shadow:0 6px 18px rgba(240,176,0,.42)}
+/* 手机版：黄色「确认完成」按钮仅桌面插件流程使用，隐藏 */
+@media(max-width:768px){#btnGenerate{display:none}}
 .btn-navy{background:var(--navy);color:#fff;box-shadow:0 4px 14px rgba(10,31,68,.28)}
 .btn-navy:hover{background:var(--navy2);box-shadow:0 6px 18px rgba(10,31,68,.34)}
 .btn-line{background:#fff;color:var(--navy);border:1px solid var(--line-2)}
@@ -617,15 +619,14 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
       <span>我确认以上资料真实、与护照一致，并了解自动填写仅录入表单、<b>最终提交由我在官方页面亲自确认</b>。I confirm the details match my passport; the auto-fill button only fills the form — I will submit it myself on the official portal.</span>
     </label>
     <div class="notice" id="bmBox">
-      <b>手机自动填表（已装 Stay 扩展）</b>——推荐用「一键跳转」，全程无需复制粘贴：
+      <b>手机自动填表（已装 Stay 扩展）</b>——点「一键跳转」，全程无需复制粘贴：
       <ol style="margin:8px 0 4px;padding-left:20px">
-        <li>勾选上方确认声明，点「② 一键跳转自动填表」→ 自动打开官方页并带上填表码。</li>
+        <li>勾选上方确认声明，点下方「一键跳转自动填表」→ 自动打开官方页并带上填表码。</li>
         <li>马来西亚官网：先关闭广告/弹窗，点官网菜单的 <b>REGISTER</b> 进入申报表单页；泰国官网：完成人机验证并点 <b>Arrival Card</b>。表单一出现，资料<b>自动填入</b>，无需粘贴。</li>
-        <li>核对后由你在官方页面亲自提交。若自动填入没触发，点右下角「自动填表」按钮走粘贴方式。</li>
+        <li>核对后由你在官方页面亲自提交。若表单一出现未自动填入，刷新官方页重试即可。</li>
       </ol>
-      <div style="margin-top:10px">
-        <button type="button" class="btn btn-line" id="btnIosCode">① 生成填表码（备用）· Copy fill code</button>
-        <button type="button" class="btn btn-line" id="btnJumpFill" style="margin-left:8px">② 一键跳转自动填表 · Jump &amp; auto-fill</button>
+      <div style="margin-top:12px;display:flex;justify-content:center">
+        <button type="button" class="btn btn-navy" id="btnJumpFill" style="flex:1;max-width:420px">一键跳转自动填表 · Jump &amp; auto-fill</button>
       </div>
     </div>
     <div class="form-actions">
@@ -2174,7 +2175,7 @@ function bmMy(d,maxTries){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
     if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（先关闭广告/弹窗，再点官网 REGISTER 进入表单页）',true)}
-    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
 function bmTh(d){
@@ -2402,7 +2403,7 @@ function init(){
       toast('电脑助手未连接：手机上请用下方「手机自动填表」区的填表码 + Stay 按钮');
     }
   });
-  /* ===== 填表码（手机 Stay 扩展方案） ===== */
+  /* ===== 手机填表：仅保留一键跳转自动填表（官方页悬浮按钮已移除） ===== */
   function copyText(text,okMsg,failMsg){
     var fallback=function(){
       var ok=false;
@@ -2423,16 +2424,6 @@ function init(){
       navigator.clipboard.writeText(text).then(function(){toast(okMsg)},fallback);
     }else{fallback()}
   }
-  $('#btnIosCode').addEventListener('click',function(){
-    if(!$('#confirmOK').checked){$('#confirmLine').classList.add('errtext');toast('请先勾选确认声明 Please tick the confirmation');return}
-    var d=validate();
-    if(!d){location.hash='#/apply';return}
-    d=finalizeDraft(d);
-    var code='';
-    try{code=btoa(unescape(encodeURIComponent(JSON.stringify(d))))}catch(e){}
-    if(!code){toast('生成失败，请重试');return}
-    copyText(code,'填表码已复制。打开官方申报页 → 点右下角「自动填表」按钮 → 弹窗里长按粘贴 → 确定，自动填入后你手动提交。','复制失败：请重试一次');
-  });
   /* 一键跳转：链接带填表码，官方页 Stay 脚本读取后自动填入（无需粘贴） */
   $('#btnJumpFill').addEventListener('click',function(){
     if(!$('#confirmOK').checked){$('#confirmLine').classList.add('errtext');toast('请先勾选确认声明 Please tick the confirmation');return}

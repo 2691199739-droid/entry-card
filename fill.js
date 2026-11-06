@@ -1,6 +1,5 @@
 /* 入境卡助手 · 官方表单填表器 fill.js — 由 publish-build.py 自动生成，勿手改
-   用法：官方申报表单页点右下角「自动填表」按钮（Stay 扩展加载本文件）→ 粘贴填表码 → 自动填入；
-   或由助手页「一键跳转」带 #mdacfill= 码打开官方页 → 自动读取并填入（无需粘贴） */
+   用法：由助手页「一键跳转」带 #mdacfill= 码打开官方页 → 自动读取并填入（无需粘贴） */
 function bmMy(d,maxTries){
   var MT=maxTries||30;
   var banner=null;
@@ -158,7 +157,7 @@ function bmMy(d,maxTries){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
     if(tries===1){note('MDAC 助手已就绪：等待官方申报表单出现后自动填入…（先关闭广告/弹窗，再点官网 REGISTER 进入表单页）',true)}
-    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，点右下角「自动填表」按钮',true)}
+    if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。请先关闭广告/弹窗，再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
 function bmTh(d){
