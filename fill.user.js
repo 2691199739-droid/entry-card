@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 /* 入境卡助手 · 官方表单填表器 fill.js — 由 publish-build.py 自动生成，勿手改
-   用法：在官方申报表单页点「填表」书签（动态加载本文件）→ 粘贴填表码 → 自动填入 */
+   用法：在官方申报表单页点右下角「自动填表」按钮（Stay 扩展加载本文件）→ 粘贴填表码 → 自动填入 */
 function bmMy(d){
   var banner=null;
   function note(m,s){
@@ -105,7 +105,7 @@ function bmMy(d){
     tries++;
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
     if(tries===1){note('MDAC 助手已就绪：等待官方表单加载完成后自动填入…',true)}
-    if(tries>=30){clearInterval(t);note('MDAC 助手：约 45 秒内未检测到表单，请确认已打开 MDAC 申报页后重新点书签',true)}
+    if(tries>=30){clearInterval(t);note('MDAC 助手：约 45 秒内未检测到表单，请确认已打开 MDAC 申报页后重新点「自动填表」按钮',true)}
   },1500);
 }
 function bmTh(d){
@@ -280,13 +280,11 @@ function bmTh(d){
   window.addEventListener('hashchange',function(){setTimeout(tryFill,800)});
   tryFill();
 }
-/* 手机通用书签加载的填表器地址（GitHub Pages 托管，改 fill.js 即全员升级） */
-var FILL_JS_URL='https://2691199739-droid.github.io/entry-card/fill.js';
 (function(){
   function bail(m){try{alert(m)}catch(e){}}
   window.__entryFill=function(){
     try{
-      if(!document.body){bail('页面还没加载完：请等表单完全显示后再点书签');return}
+      if(!document.body){bail('页面还没加载完：请等表单完全显示后再点「自动填表」按钮');return}
       var c=null;
       try{c=prompt('入境卡填表：请长按粘贴填表码（已在助手页面点「生成填表码」复制）','')}catch(e){}
       if(!c||!String(c).trim())return;
@@ -297,7 +295,7 @@ var FILL_JS_URL='https://2691199739-droid.github.io/entry-card/fill.js';
       var isMY=!!(document.getElementById('name')&&document.getElementById('passNo'));
       var isTH=false;
       try{isTH=!!document.querySelector('[formcontrolname=passportNo]')}catch(e){}
-      if(d.dest==='TH'?!isTH:!isMY){bail('当前页面不是申报表单页：请先在官网点 REGISTER / Apply 按钮进入表单页，等表单完全显示后再点书签「填表」');return}
+      if(d.dest==='TH'?!isTH:!isMY){bail('当前页面不是申报表单页：请先在官网点 REGISTER / Apply 按钮进入表单页，等表单完全显示后再点右下角「自动填表」按钮');return}
       (d.dest==='TH'?bmTh:bmMy)(d);
     }catch(e){bail('填表脚本出错：'+(e&&e.message?e.message:'未知错误')+'。请截图反馈给管理员')}
   };
