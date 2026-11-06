@@ -1445,7 +1445,8 @@ function autoGenReturnHotel(force){
     if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
   }
   var df=document.getElementById('f-deptflight');
-  if(arr&&df&&(force||!df.value)){
+  // 离境航班仅泰国 TDAC 需要：马来西亚 MDAC 返程只填日期
+  if(arr&&DEST==='TH'&&df&&(force||!df.value)){
     var fl=randDeptFlight();
     if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
   }
