@@ -1693,7 +1693,7 @@ function runOcr(img){
       if(mParts.length!==2)return false;
       if(mParts[0]!==sur)return false;
       if(mParts[1]===giv)return false;
-      if(giv.indexOf(mParts[1])===0||mParts[1].indexOf(giv)===0){mrz.name=sur+' '+giv;return true}
+      if(giv.indexOf(mParts[1])===0||mParts[1].indexOf(giv)===0){mrz.name=sur+' '+giv;mrz.nameVerified=true;return true}
       return false;
     }
     try{window.__nameFix=[]}catch(e){}
@@ -1742,10 +1742,16 @@ function applyMrz(m){
   if(VERIFIED_PROFILE&&m.passportNo===VERIFIED_PROFILE.passport){
     m.name=VERIFIED_PROFILE.name;profileMatch=true;
   }
-  /* 本机记忆的核对姓名：同一本护照（号一致）时优先使用，识别丢字不再需要每次手改 */
+  /* 本机记忆的核对姓名：同一本护照（号一致）时优先使用，识别丢字不再需要每次手改。
+     但印刷体核对（nameVerified）是双来源交叉确认，信任度更高，优先于本机记忆 ——
+     旧版本曾把截断名（如 WANG YAJ）写进记忆，若不拦会覆盖掉印刷体核对的完整名 */
   var saved=loadMyProfile();
-  if(!profileMatch&&saved&&saved.passport===m.passportNo&&saved.name){
+  if(!profileMatch&&!m.nameVerified&&saved&&saved.passport===m.passportNo&&saved.name){
     m.name=saved.name;savedMatch=true;
+  }
+  /* 自愈：核对出的名字比本机记忆更长（旧记忆是被截断的前缀），顺手把本机记忆更新为完整名 */
+  if(m.nameVerified&&saved&&saved.passport===m.passportNo&&saved.name&&String(m.name).toUpperCase().indexOf(String(saved.name).toUpperCase())===0&&saved.name!==m.name){
+    saveMyProfile(m.name,m.passportNo);
   }
   var setKeys=[];
   function set(k,v){
