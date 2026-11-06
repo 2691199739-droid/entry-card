@@ -1410,16 +1410,16 @@ function dstr(dt){var m=dt.getMonth()+1,dd=dt.getDate();return dt.getFullYear()+
 function autoGenReturnHotel(force){
   var done=[],auto=[];
   var arr=document.getElementById('f-arrival').value;
-  var base=arr?new Date(arr+'T00:00:00'):new Date();
-  if(!arr){base.setDate(base.getDate()+1)}
   var depEl=document.getElementById('f-departure');
-  if(depEl&&(force||!depEl.value)){
+  // 返程依赖抵达日期作基准：无抵达日期时不自动生成，避免乱刷出离境信息
+  if(arr&&depEl&&(force||!depEl.value)){
+    var base=new Date(arr+'T00:00:00');
     var d=new Date(base.getTime());d.setDate(d.getDate()+7+randInt(0,2));
     var iso=dstr(d);
     if(travelSetField('f-departure',iso))auto.push('离境 '+iso);
   }
   var df=document.getElementById('f-deptflight');
-  if(df&&(force||!df.value)){
+  if(arr&&df&&(force||!df.value)){
     var fl=randDeptFlight();
     if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
   }
@@ -2435,7 +2435,9 @@ function init(){
   $('#autoGenTravel').addEventListener('click',function(){
     var done=autoGenReturnHotel();
     if(done.length){
-      setTravel('已自动填入：'+done.join('；')+'（示例占位，请核对修改）','ok');
+      var msg='已自动填入：'+done.join('；');
+      if(!document.getElementById('f-arrival').value)msg+='；未生成返程——请先填写/识别抵达日期';
+      setTravel(msg+'（示例占位，请核对修改）','ok');
     }else{
       setTravel('返程与酒店信息已存在，无需重复生成 Already filled','ok');
     }
