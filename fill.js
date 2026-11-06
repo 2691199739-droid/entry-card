@@ -149,6 +149,7 @@ function bmMy(d,maxTries){
     var round=0;
     function run(){
       round++;
+      closeModals();
       var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
       p.then(function(r){
         if(round<5&&r.miss&&r.miss.length){setTimeout(run,1200);return}
@@ -189,16 +190,18 @@ function bmMy(d,maxTries){
       }
     }catch(e){}
   }
-  /* 公告弹窗关掉后，自动点击 REGISTER / REGISTRATION 进入申报表单页（8 秒节流防重复点） */
+  /* 公告弹窗关掉后，自动点击 REGISTER / REGISTRATION 进入申报表单页。
+     网络慢适配：按钮必须可见才点；点一次后 12 秒内不再重复点，避免官网还没加载好被连续点击 */
   function clickRegister(){
     try{
       var now=+new Date();
-      if(window.__regLastClick && now-window.__regLastClick<8000)return false;
+      if(window.__regLastClick && now-window.__regLastClick<12000)return false;
       var btns=document.querySelectorAll('button,a,[role="button"]');
       for(var i=0;i<btns.length;i++){
         var b=btns[i];
         var t=(b.textContent||'').trim().toUpperCase().replace(/\s+/g,' ');
         if(t==='REGISTER'||t==='REGISTRATION'){
+          if(!(b.offsetWidth||b.offsetHeight))continue;
           window.__regLastClick=now;
           b.click();
           return true;
@@ -209,10 +212,16 @@ function bmMy(d,maxTries){
   }
   var t=setInterval(function(){
     tries++;
+    var modalVisible=false;
+    try{
+      var m0=document.getElementById('myModal');
+      modalVisible=!!(m0&&m0.classList.contains('in')&&(m0.offsetWidth||m0.offsetHeight));
+    }catch(e){}
     closeModals();
     if(g('name')||g('passNo')||document.querySelector('form[name="permohonan"]')){clearInterval(t);doFill();return}
-    clickRegister();
-    if(tries===1){note('MDAC 助手已就绪：公告弹窗将自动关闭，并自动点击 REGISTER 进入申报表单页，表单一出现即自动填入',true)}
+    /* 网络慢适配：弹窗已消失 + 页面完全加载 + 脚本启动满 2 轮（3 秒）后，才尝试自动点 REGISTER */
+    if(!modalVisible && document.readyState==='complete' && tries>=2){clickRegister()}
+    if(tries===1){note('MDAC 助手已就绪：公告弹窗将自动关闭，页面加载完成后自动点击 REGISTER 进入申报表单页，表单一出现即自动填入（网络慢时会自动等待重试）',true)}
     if(tries>=MT){clearInterval(t);note('MDAC 助手：等待表单超时。若页面仍被弹窗遮挡，请点弹窗右上角 ×；再点官网 REGISTER 进入申报表单页；表单出现后如未自动填入，请刷新本页重试',true)}
   },1500);
 }
