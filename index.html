@@ -1351,6 +1351,16 @@ function travelSetField(id,val){
   el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));
   return true;
 }
+/* 酒店/地址文本 → 州代码+城市（sq 为去除空白后的文本） */
+function pickStateCity(sq){
+  if(!sq)return null;
+  var ZH={'吉隆':['14','KUALA LUMPUR'],'雪兰莪':['10',''],'槟城':['07','GEORGE TOWN'],'乔治':['07','GEORGE TOWN'],'马六甲':['04','MELAKA'],'新山':['01','JOHOR BAHRU'],'莎阿南':['10','SHAH ALAM'],'巴生':['10','KLANG'],'八打灵再也':['10','PETALING JAYA'],'梳邦再也':['10','SUBANG JAYA'],'布城':['16','PUTRAJAYA'],'亚庇':['12','KOTA KINABALU'],'古晋':['13','KUCHING'],'仙本那':['12','SEMPORNA'],'兰卡威':['02','LANGKAWI'],'怡保':['08','IPOH'],'芙蓉':['05','SEREMBAN'],'关丹':['06','KUANTAN'],'云顶':['06','GENTING HIGHLANDS'],'哥打基纳巴卢':['12','KOTA KINABALU']};
+  for(var k in ZH){if(sq.indexOf(k)>-1)return{s:ZH[k][0],c:ZH[k][1]}}
+  var EN={'KUALALUMPUR':['14','KUALA LUMPUR'],'PETALINGJAYA':['10','PETALING JAYA'],'SHAHALAM':['10','SHAH ALAM'],'SUBANGJAYA':['10','SUBANG JAYA'],'KLANG':['10','KLANG'],'GEORGETOWN':['07','GEORGE TOWN'],'PENANG':['07','GEORGE TOWN'],'MELAKA':['04','MELAKA'],'MALACCA':['04','MELAKA'],'JOHORBAHRU':['01','JOHOR BAHRU'],'IPOH':['08','IPOH'],'SEREMBAN':['05','SEREMBAN'],'KUANTAN':['06','KUANTAN'],'KOTAKINABALU':['12','KOTA KINABALU'],'KUCHING':['13','KUCHING'],'PUTRAJAYA':['16','PUTRAJAYA'],'LABUAN':['15','LABUAN'],'SEMPORNA':['12','SEMPORNA'],'LANGKAWI':['02','LANGKAWI'],'GENTINGHIGHLANDS':['06','GENTING HIGHLANDS'],'ALORSETAR':['02','ALOR SETAR'],'KUALATERENGGANU':['11','KUALA TERENGGANU'],'KOTABHARU':['03','KOTA BHARU'],'KANGAR':['09','KANGAR']};
+  var up=sq.toUpperCase();
+  for(var e in EN){if(up.indexOf(e)>-1)return{s:EN[e][0],c:EN[e][1]}}
+  return null;
+}
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice()}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
@@ -1398,6 +1408,8 @@ function applyTravelTexts(texts){
     var d=firstDate(inbound);
     if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
     if(inbOrg){
+      var trn=squash(inbound).match(/中转([\u4e00-\u9fa5]{2,6})/);
+      if(trn)inbOrg=cleanCity(trn[1]);
       var portMap={北京:'CHN',上海:'CHN',广州:'CHN',深圳:'CHN',成都:'CHN',杭州:'CHN',西安:'CHN',厦门:'CHN',昆明:'CHN',重庆:'CHN',天津:'CHN',武汉:'CHN',长沙:'CHN',南京:'CHN',青岛:'CHN',海口:'CHN',三亚:'CHN',福州:'CHN',郑州:'CHN',乌鲁木齐:'CHN',香港:'HKG',澳门:'MAC',台北:'TWN',新加坡:'SGP',曼谷:'THA',首尔:'KOR',东京:'JPN',大阪:'JPN'};
       var code=portMap[inbOrg]||(/^[\u4e00-\u9fa5]+$/.test(inbOrg)?'CHN':'');
       if(code&&travelSetField('f-lastport',code))done.push('出发地 '+inbOrg);
@@ -1420,8 +1432,9 @@ function applyTravelTexts(texts){
     if(pl)pc=pl[1];
     lines.forEach(function(L){
       var t=L.trim();
-      if(!name&&/^[^A-Za-z0-9]*[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(t)&&/Suite|Hotel|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced/i.test(t)){
-        name=t.replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').replace(/^([a-z][A-Za-z]?\s+)/,'').trim();
+      var tn=t.replace(/^[\s\d#*•.,、。]+\s*/,'');
+      if(!name&&/^[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(tn)&&/Suite|Hotel|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced/i.test(tn)){
+        name=tn.replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').replace(/^([a-z][A-Za-z]?\s+)/,'').trim();
       }
       if(pc&&t.indexOf(pc)>-1){
         var sm=t.replace(/^[^A-Za-z]+/,'').match(/^([A-Za-z][A-Za-z0-9 .']{3,40}?)[,，]/);
@@ -1429,10 +1442,11 @@ function applyTravelTexts(texts){
       }
     });
     if(DEST!=='TH'){
-      if(/吉隆/.test(hotel)){
-        travelSetField('f-state','14');travelSetField('f-city','KUALA LUMPUR');
-        done.push('州属 吉隆坡 · 城市 KUALA LUMPUR');
-      }else if(/雪兰莪/.test(hotel)){travelSetField('f-state','10');done.push('州属 雪兰莪')}
+      var sc=pickStateCity(squash(hotel));
+      if(sc){
+        if(travelSetField('f-state',sc.s))done.push('州属 '+sc.s);
+        if(sc.c&&travelSetField('f-city',sc.c))done.push('城市 '+sc.c);
+      }
     }
     if(pc){travelSetField('f-postcode',pc);done.push('邮编 '+pc)}
     if(name){travelSetField('f-address',name);done.push('酒店 '+name)}
