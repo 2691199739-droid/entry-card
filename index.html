@@ -1217,42 +1217,69 @@ function setOcr(msg,pct,cls){
   $('#ocrMsg').textContent=msg;
   $('#ocrBar').style.width=(pct||0)+'%';
 }
-/* OCR 引擎多 CDN：国内移动网络对 cdnjs/unpkg 不稳，fastly.jsdelivr.net 优先，逐源重试 */
-var TESS_CDNS=['https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js','https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js','https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js'];
+/* OCR 引擎版本组：v7 引擎更新、速度与内存更优，优先使用；
+   主脚本与 worker/wasm 核心同组绑定，任一环节失败自动整体回退 v5（国内网络多 CDN 逐源重试） */
+var tessSetIdx=0;
+var TESS_SETS=[
+  {ver:'7',main:[
+    'https://fastly.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js',
+    'https://unpkg.com/tesseract.js@7.0.0/dist/tesseract.min.js'
+  ],srcs:[
+    {workerPath:'https://fastly.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@7.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+    {workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@7.0.0/',langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+    {workerPath:'https://unpkg.com/tesseract.js@7.0.0/dist/worker.min.js',corePath:'https://unpkg.com/tesseract.js-core@7.0.0/',langPath:'https://tessdata.projectnaptha.com/4.0.0/'}
+  ]},
+  {ver:'5',main:[
+    'https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js',
+    'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js',
+    'https://unpkg.com/tesseract.js@5.1.1/dist/tesseract.min.js'
+  ],srcs:[
+    {workerPath:'https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+    {workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+    {workerPath:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
+    {workerPath:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://unpkg.com/tesseract.js-core@5.0.0/',langPath:'https://tessdata.projectnaptha.com/4.0.0/'}
+  ]}
+];
 function loadTesseract(cb){
-  if(window.Tesseract)return cb();
+  if(window.Tesseract){tessLoading=false;return cb()}
   if(tessLoading){setTimeout(function(){loadTesseract(cb)},300);return}
+  if(tessSetIdx>=TESS_SETS.length){tessLoading=false;ocrBusy=false;travelBusy=false;var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);setOcr('识别引擎加载失败：请检查网络（可换 Wi-Fi）后重试，或手动填写。Engine failed to load'+(window.__cdDiag.length?' ['+window.__cdDiag.join(' | ')+']':'')+(mob?'；若在 App 内置浏览器打开，请复制链接改用系统浏览器 Safari/Chrome':''),0,'bad');try{setTravel('识别引擎加载失败，请检查网络后重试','bad')}catch(e){}return}
   tessLoading=true;
-  var i=0;window.__cdDiag=[];
+  var set=TESS_SETS[tessSetIdx],i=0;window.__cdDiag=[];
   (function tryNext(){
-    if(i>=TESS_CDNS.length){tessLoading=false;ocrBusy=false;travelBusy=false;var mob=/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);setOcr('识别引擎加载失败：请检查网络（可换 Wi-Fi）后重试，或手动填写。Engine failed to load'+(window.__cdDiag.length?' ['+window.__cdDiag.join(' | ')+']':'')+(mob?'；若在 App 内置浏览器打开，请复制链接改用系统浏览器 Safari/Chrome':''),0,'bad');try{setTravel('识别引擎加载失败，请检查网络后重试','bad')}catch(e){}return}
+    if(i>=set.main.length){tessSetIdx++;tessLoading=false;loadTesseract(cb);return}
     var s=document.createElement('script');
     var sIdx=i;
-    s.src=TESS_CDNS[i++];
-    var to=setTimeout(function(){window.__cdDiag.push('C'+(sIdx+1)+':超时');s.remove();tryNext()},30000);
+    s.src=set.main[i++];
+    var to=setTimeout(function(){window.__cdDiag.push('V'+set.ver+'C'+(sIdx+1)+':超时');s.remove();tryNext()},30000);
     s.onload=function(){clearTimeout(to);cb()};
-    s.onerror=function(){clearTimeout(to);window.__cdDiag.push('C'+(sIdx+1)+':不可达');s.remove();tryNext()};
+    s.onerror=function(){clearTimeout(to);window.__cdDiag.push('V'+set.ver+'C'+(sIdx+1)+':不可达');s.remove();tryNext()};
     document.head.appendChild(s);
   })();
 }
-/* worker / wasm 核心 / 语言包全链多源 + 90 秒超时（有下载进度会自动续期），任一源成功即用 */
-var TESS_SOURCES=[
-  {workerPath:'https://fastly.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
-  {workerPath:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://cdn.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
-  {workerPath:'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/worker.min.js',corePath:'https://fastly.jsdelivr.net/npm/tesseract.js-core@5.0.0/',langPath:'https://fastly.jsdelivr.net/gh/naptha/tessdata@gh-pages/4.0.0/'},
-  {workerPath:'https://unpkg.com/tesseract.js@5.1.1/dist/worker.min.js',corePath:'https://unpkg.com/tesseract.js-core@5.0.0/',langPath:'https://tessdata.projectnaptha.com/4.0.0/'}
-];
+/* worker / wasm 核心 / 语言包全链多源 + 90 秒超时（有下载进度会自动续期），任一源成功即用；
+   当前版本组全部失败时自动降级到下一版本组（主脚本与 worker 同版本重新加载） */
 function tessCreateWorker(lang,oem,opts,cb){
+  var set=TESS_SETS[tessSetIdx]||TESS_SETS[0];
   var i=0;opts=opts||{};
   window.__tessDiag=[];
   (function tryNext(){
-    if(i>=TESS_SOURCES.length){cb(null);return}
-    var src=TESS_SOURCES[i++],srcIdx=i,settled=false,timer=null,p=null,lastErr='';
+    if(i>=set.srcs.length){
+      if(tessSetIdx<TESS_SETS.length-1){
+        try{delete window.Tesseract}catch(e){window.Tesseract=null}
+        tessSetIdx++;tessLoading=false;
+        loadTesseract(function(){tessCreateWorker(lang,oem,opts,cb)});
+      }else cb(null);
+      return;
+    }
+    var src=set.srcs[i++],srcIdx=i,settled=false,timer=null,p=null,lastErr='';
     function settle(ok,w,why){
       if(settled)return;settled=true;clearTimeout(timer);
       if(ok){cb(w)}
       else{
-        window.__tessDiag.push('S'+srcIdx+':'+String(why||lastErr||'fail').slice(0,60));
+        window.__tessDiag.push('V'+set.ver+'S'+srcIdx+':'+String(why||lastErr||'fail').slice(0,60));
         if(p&&p.then){p.then(function(late){try{late.terminate()}catch(e){}}).catch(function(){})}
         tryNext();
       }
