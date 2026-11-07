@@ -1467,7 +1467,7 @@ function pickStateCity(sq){
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice()}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
-  var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='';
+  var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
   function squash(t){return t.replace(/[ \t]/g,'')}
   function cleanCity(s){
     var t=s;
@@ -1545,7 +1545,7 @@ function applyTravelTexts(texts){
   }
   if(ret){
     var rd=firstDate(ret);
-    if(rd){if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
+    if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
   }
   if(hotel){
     var lines=hotel.split(/\n/),name='',street='',pc='';
@@ -1580,7 +1580,9 @@ function applyTravelTexts(texts){
     // 未识别到抵达日期：保持留空，不自动生成示例日期；离境与酒店依赖抵达日期，也不会自动生成
     warn.push('未识别到抵达日期，请手动填写');
   }
-  var ag=autoGenReturnHotel();
+  // 本次扫描未识别到离境日期时：只要识别到了抵达日期，就强制按抵达+7~9重新生成离境（覆盖手动填过的旧值）
+  var hasArr=!!document.getElementById('f-arrival').value;
+  var ag=autoGenReturnHotel(hasArr&&!retDateFound);
   if(ag.length)done=done.concat(ag);
   var today=new Date().toISOString().slice(0,10);
   var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
