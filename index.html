@@ -1888,12 +1888,12 @@ function runOcr(img){
         var m=seg.match(/NAME[^A-Z]{0,14}([A-Z]{2,20})[^A-Z]{0,6}([A-Z]{2,20})/);
         if(m)return m[1]+' '+m[2];
       }
-      var m2=up.match(/([A-Z]{2,20})[,，]\s*([A-Z]{2,20})/);
-      return m2?m2[1]+' '+m2[2]:null;
+      var m2=up.match(/([A-Z]{3,20})[,，]\s*([A-Z]{3,20})/);
+      if(m2&&!/^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)$/.test(m2[1]))return m2[1]+' '+m2[2];
     }
     function applyFix(cand){
       if(!mrz||!mrz.ok||!mrz.name||!cand)return false;
-      var parts=String(cand).toUpperCase().trim().split(/[,，\s]+/).filter(function(x){return /^[A-Z]{2,20}$/.test(x)});
+      var parts=String(cand).toUpperCase().trim().split(/[,，\s]+/).filter(function(x){return /^[A-Z]{3,20}$/.test(x)});
       if(parts.length!==2)return false;
       var sur=parts[0],giv=parts[1];
       /* MRZ 名可能带残余误读词（如 WANG YAJ TE），取前两词比对 */
@@ -1901,7 +1901,10 @@ function runOcr(img){
       if(mParts.length!==2)return false;
       if(mParts[0]!==sur)return false;
       if(mParts[1]===giv)return false;
-      if(giv.indexOf(mParts[1])===0||mParts[1].indexOf(giv)===0){mrz.name=sur+' '+giv;mrz.nameVerified=true;return true}
+      /* 只接受「印刷体更完整」方向的修正：印刷体名以 MRZ 名为前缀且更长。
+         反向（印刷体更短）说明视觉区读少了，禁止覆盖 MRZ 里更完整的名字 ——
+         他人护照版式各异，视觉区更容易漏读，此前双方向放行曾把好名字改短 */
+      if(giv.indexOf(mParts[1])===0&&giv.length>mParts[1].length){mrz.name=sur+' '+giv;mrz.nameVerified=true;return true}
       return false;
     }
     try{window.__nameFix=[]}catch(e){}
