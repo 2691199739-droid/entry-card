@@ -1989,6 +1989,13 @@ function runOcr(img){
       return seqP;
     }):Promise.resolve();
     nameVerify.then(function(){
+      /* nameless 兜底：MRZ 姓名行读漏（如第一行模糊/裁切）时，信息页印刷体姓名是唯一来源。
+         此前 applyFix 只在 mrz.name 存在时工作，印刷体读到的完整名被丢弃、名字不填。
+         现在印刷体候选直接补名并标记 nameVerified（cross-check 已无 MRZ 侧可比较） */
+      if(mrz&&mrz.ok&&!mrz.name&&window.__nameFix&&window.__nameFix.length){
+        var cands=window.__nameFix.map(function(x){return x&&x.cand}).filter(Boolean);
+        if(cands.length){mrz.name=cands[0];mrz.nameVerified=true}
+      }
       if(worker){try{worker.terminate()}catch(e){}worker=null}
       ocrBusy=false;
       if(mrz&&mrz.ok)applyMrz(mrz);
@@ -2045,7 +2052,8 @@ function applyMrz(m){
   if(m.pob)msg+='；出生地已按照片识别结果填入 Place of birth recognized from photo';
   if(profileMatch)msg+='；识别结果与内置已验证资料一致，姓名按已验证资料填入 Verified profile matched';
   if(savedMatch)msg+='；姓名已按你上次核对的结果填入 Name restored from your last verified entry';
-  if(!profileMatch&&!savedMatch)msg+='；请重点核对姓名是否完整（姓与名应都识别出来、拼写正确）Please double-check the full name spelling';
+  if(!profileMatch&&!savedMatch&&m.nameVerified)msg+='；机读区姓名缺失，姓名已按信息页印刷体识别填入 Name taken from the printed name on the bio page';
+  if(!profileMatch&&!savedMatch&&!m.nameVerified)msg+='；请重点核对姓名是否完整（姓与名应都识别出来、拼写正确）Please double-check the full name spelling';
   msg+='。请核对，并补充联系方式与行程信息。Auto-filled '+setKeys.length+' fields';
   setOcr(msg,100,'ok');
   if(m.warn)toast(m.warn);
