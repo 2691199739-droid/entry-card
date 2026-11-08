@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>入境卡办理助手 · 马来西亚 MDAC</title>
+<meta name="theme-color" content="#0A1F44">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="入境卡助手">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23122E5C'/%3E%3Crect x='6.5' y='5.5' width='19' height='21' rx='2.5' fill='%23fff'/%3E%3Crect x='6.5' y='5.5' width='11' height='21' rx='2.5' fill='%23E8EEF7'/%3E%3Cline x1='17.5' y1='5.5' x2='17.5' y2='26.5' stroke='%23B9C6DA' stroke-width='1'/%3E%3Crect x='8.5' y='9.5' width='7' height='1.8' rx='.9' fill='%239FB0CC'/%3E%3Crect x='8.5' y='13.5' width='5' height='1.8' rx='.9' fill='%239FB0CC'/%3E%3Ccircle cx='21' cy='21.5' r='4.2' fill='%23FFC72C'/%3E%3Cpath d='M21 19.1L21.3 20.6L22.4 19.6L21.7 21L23.3 20.8L21.9 21.5L23.3 22.2L21.7 22L22.4 23.4L21.3 22.4L21 23.9L20.7 22.4L19.6 23.4L20.3 22L18.7 22.2L20.1 21.5L18.7 20.8L20.3 21L19.6 19.6L20.7 20.6Z' fill='%230A1F44'/%3E%3C/svg%3E">
 <style>
 /* ===== 设计令牌 ===== */
@@ -2630,6 +2638,12 @@ function init(){
 }
 init();
 })();
+/* PWA：注册 Service Worker（同源网络优先，联网永远拿最新） */
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
 </script>
 </body>
 </html>
