@@ -1,0 +1,17 @@
+{
+  "name": "入境卡办理助手 · 马来西亚 MDAC",
+  "short_name": "入境卡助手",
+  "description": "马来西亚 MDAC 入境卡自助办理：护照拍照识别、行程自动填入、一键跳转官方填表。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4F6FA",
+  "theme_color": "#0A1F44",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
