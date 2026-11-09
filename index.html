@@ -1394,7 +1394,23 @@ function handleTravelFiles(files){
             var ctx=c.getContext('2d');
             try{ctx.imageSmoothingQuality='high'}catch(e2){}
             ctx.drawImage(img,0,0,c.width,c.height);
-            return w.recognize(c).then(function(r){return (r&&r.data&&r.data.text)||''});
+            return w.recognize(c).then(function(r){
+              var full=(r&&r.data&&r.data.text)||'';
+              // 第一张图：顶部 15% 区域再放大 2.5 倍单独识别（航班号通常在顶部标题行，
+              // 手机端小字数字易被误读为字母，局部放大可保住数字）
+              if(i!==0)return full;
+              var ch0=Math.max(40,Math.round(h0*0.15));
+              var mag=2.5;
+              var c2=document.createElement('canvas');
+              c2.width=Math.round(w0*mag);c2.height=Math.round(ch0*mag);
+              var ctx2=c2.getContext('2d');
+              try{ctx2.imageSmoothingQuality='high'}catch(e3){}
+              ctx2.drawImage(img,0,0,w0,ch0,0,0,c2.width,c2.height);
+              return w.recognize(c2).then(function(r2){
+                var top=(r2&&r2.data&&r2.data.text)||'';
+                return top?(full?full+'\n===TOP===\n'+top:full):full;
+              });
+            });
           });
         }).then(function(t){if(t)texts.push(t)});
       });
