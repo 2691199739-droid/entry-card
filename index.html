@@ -520,7 +520,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109h</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109i</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2339,6 +2339,23 @@ function liveOcrFrame(img){
 }
 /* 页面切到后台时自动停流（省电、避免摄像头指示灯常亮）；回到前台需重新点「实时扫描」 */
 try{document.addEventListener('visibilitychange',function(){if(document.hidden&&liveRunning)stopLiveScan(false)})}catch(e){}
+/* ===== 环境自检横幅：主屏幕独立窗口（PWA）里填表脚本不运行，提示用户换图标 ===== */
+(function(){
+  try{
+    var uaE=navigator.userAgent;
+    if(/(iPhone|iPad|iPod)/i.test(uaE)){
+      var isPWA=false;
+      try{isPWA=!!navigator.standalone||!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){}
+      if(isPWA){
+        var b=document.createElement('div');
+        b.textContent='注意：当前是旧版主屏幕图标（独立窗口），自动填表不可用。请删除本图标，用 Safari 打开本页重新「添加到主屏幕」。';
+        b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#B00020;color:#fff;font-size:13px;line-height:1.6;padding:8px 12px;text-align:center';
+        document.body.appendChild(b);
+        setTimeout(function(){try{b.remove()}catch(e){}},9000);
+      }
+    }
+  }catch(e){}
+})();
 /* ===== 本机姓名记忆（各人手机只存各人核对过的姓名，页面本身不含任何资料）===== */
 function loadMyProfile(){
   try{return JSON.parse(localStorage.getItem('entryCardMyProfile')||'null')}catch(e){return null}
