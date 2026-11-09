@@ -212,6 +212,17 @@ body.dest-th [data-f="passportExp"]{display:none}
 .ocr-zone .ic svg{width:27px;height:27px}
 .ocr-zone b{font-size:15.5px;display:block;margin-bottom:3px}
 .ocr-zone span{font-size:12.5px;color:var(--mut);display:block}
+/* ===== 实时扫描 ===== */
+.live-bar{margin-top:14px;display:flex;justify-content:center}
+.live-bar .btn{width:100%;max-width:420px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700}
+.live-wrap{margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#000;box-shadow:var(--shadow-sm)}
+.live-video-box{position:relative;width:100%;max-height:64vh;background:#000}
+.live-video-box video{display:block;width:100%;max-height:64vh;object-fit:cover}
+.live-guide{position:absolute;left:5%;right:5%;top:66%;bottom:3%;border:2px dashed rgba(255,199,44,.95);border-radius:12px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.28)}
+.live-guide::before{content:'机读区 MRZ 对准此框';position:absolute;left:50%;top:-26px;transform:translateX(-50%);color:#FFC72C;font-size:12.5px;font-weight:800;white-space:nowrap;background:rgba(10,31,68,.82);padding:3px 12px;border-radius:999px;letter-spacing:.3px}
+.live-ctrl{display:flex;align-items:center;gap:12px;background:#fff;padding:12px 14px}
+.live-ctrl .hint{flex:1;font-size:13px;color:var(--mut);margin:0}
+.live-ctrl .btn{flex:0 0 auto;padding:8px 14px}
 .ocr-status{display:none;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--mut);box-shadow:var(--shadow-sm)}
 .ocr-status.show{display:flex;align-items:center;gap:10px}
 .ocr-status .spin{width:16px;height:16px;flex:0 0 16px;border:2.5px solid var(--line-2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
@@ -390,6 +401,22 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <div class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="15" rx="2.5" stroke="#FFC72C" stroke-width="2"/><circle cx="12" cy="11.5" r="2.6" stroke="#FFC72C" stroke-width="2"/><path d="M7 17c.8-1.8 2.8-2.8 5-2.8s4.2 1 5 2.8" stroke="#FFC72C" stroke-width="2" stroke-linecap="round"/><circle cx="17.2" cy="8" r="1.4" fill="#FFC72C"/></svg></div>
         <b>点击上传 / 拍照，或把照片拖到这里</b>
         <span>Click, take a photo, or drag an image here · JPG / PNG · 识别在本地进行，图片不会上传</span>
+      </div>
+      <div class="live-bar">
+        <button type="button" class="btn btn-navy" id="liveScanBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v1M20 17v1a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
+          实时扫描 · 对准护照自动识别
+        </button>
+      </div>
+      <div class="live-wrap" id="liveWrap" hidden>
+        <div class="live-video-box">
+          <video id="liveVideo" autoplay playsinline muted></video>
+          <div class="live-guide"></div>
+        </div>
+        <div class="live-ctrl">
+          <span class="hint" id="liveHint">对准护照资料页，机读区放进黄框，识别成功会自动填入</span>
+          <button type="button" class="btn btn-line" id="liveStopBtn">停止扫描</button>
+        </div>
       </div>
       <div class="ocr-status" id="ocrStatus">
         <span class="spin"></span>
@@ -1330,6 +1357,7 @@ function prepCanvas(img,frac){
 }
 function handleOcrFile(file){
   if(ocrBusy){toast('正在识别中，请稍候 Still processing');return}
+  if(liveRunning){toast('正在实时扫描，请先点「停止扫描」再上传照片');return}
   if(!file||!/^image\//.test(file.type)){toast('请选择图片文件 Please choose an image');return}
   ocrBusy=true;
   setOcr('正在加载识别引擎 Loading engine…',5);
@@ -2017,6 +2045,144 @@ function runOcr(img){
     setOcr('识别出错，请重试或手动填写 Error: '+(e&&e.message?e.message:'unknown'),0,'bad');
   });
 }
+/* ===== 实时扫描：摄像头持续取景，识别到正确的机读区后自动填入 =====
+   轻量帧识别（liveOcrFrame）只负责判定「这一帧是否清晰完整」，一旦命中立即把该帧
+   交给完整主管线 runOcr 精修（含印刷体姓名核对、nameless 兜底、本机姓名记忆），
+   最终填表与拍照上传完全一致。 */
+var liveStream=null,liveWorker=null,liveRunning=false,liveBusy=false,liveTries=0,liveTimer=null,livePoolAcc=[];
+function stopLiveStream(){
+  if(liveStream){try{liveStream.getTracks().forEach(function(t){t.stop()})}catch(e){}liveStream=null}
+  var v=document.getElementById('liveVideo');if(v){try{v.srcObject=null}catch(e){}}
+}
+function stopLiveScan(userStopped){
+  liveRunning=false;
+  if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
+  stopLiveStream();
+  if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
+  var w=document.getElementById('liveWrap');if(w)w.hidden=true;
+  if(userStopped)setOcr('已停止实时扫描。可重新对准扫描，或改用拍照上传。Live scan stopped',100,'ok');
+}
+function startLiveScan(){
+  if(liveRunning)return;
+  if(ocrBusy){toast('正在识别中，请稍候 Still processing');return}
+  setOcr('正在打开摄像头 Opening camera…',3);
+  liveRunning=true;liveTries=0;livePoolAcc=[];
+  function fail(msg){stopLiveScan(false);setOcr(msg,0,'bad')}
+  loadTesseract(function(){
+    var md=navigator.mediaDevices||null;
+    if(!md||!md.getUserMedia){fail('此浏览器不支持实时摄像头，请改用拍照上传 Camera not supported');return}
+    md.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}},audio:false}).then(function(st){
+      liveStream=st;
+      var v=document.getElementById('liveVideo');
+      v.srcObject=st;
+      v.onloadedmetadata=function(){v.play().catch(function(){})};
+      document.getElementById('liveWrap').hidden=false;
+      setOcr('对准护照资料页（机读区放进黄框），识别成功会自动填入…',8);
+      tessWorkerPromise('eng',1,null).then(function(w){
+        liveWorker=w;
+        return w.setParameters({tessedit_pageseg_mode:'6'});
+      }).then(function(){liveTick()}).catch(function(){
+        fail('实时识别引擎加载失败，请检查网络后重试，或改用拍照上传 Engine failed');
+      });
+    }).catch(function(){
+      fail('无法打开摄像头：请在浏览器设置里允许相机权限后重试，或改用拍照上传 Camera blocked');
+    });
+  });
+}
+function liveTick(){
+  if(!liveRunning)return;
+  if(liveBusy){liveTimer=setTimeout(liveTick,500);return}
+  var v=document.getElementById('liveVideo');
+  if(!v||!v.videoWidth){liveTimer=setTimeout(liveTick,500);return}
+  liveBusy=true;liveTries++;
+  var w=v.videoWidth,h=v.videoHeight;
+  var c=document.createElement('canvas');c.width=w;c.height=h;
+  c.getContext('2d').drawImage(v,0,0,w,h);
+  setOcr('正在自动识别（第 '+liveTries+' 次）…保持平稳对准，识别成功会自动停止 Scanning '+liveTries+'…',8);
+  liveOcrFrame(c).then(function(m){
+    liveBusy=false;
+    if(m&&m.ok&&m.passportNo){
+      liveRunning=false;
+      if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
+      stopLiveStream();
+      if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
+      var w1=document.getElementById('liveWrap');if(w1)w1.hidden=true;
+      setOcr('已捕捉到清晰的机读区，正在核对信息并填入… Got it, verifying…',20);
+      ocrBusy=true;
+      runOcr(c);
+      return;
+    }
+    if(liveRunning)liveTimer=setTimeout(liveTick,500);
+  }).catch(function(){
+    liveBusy=false;
+    if(liveRunning)liveTimer=setTimeout(liveTick,500);
+  });
+}
+/* 轻量单帧判定：MRZ 带检测 + 二值化逐行/整区识别，校验位通过即视为「这一帧可用」 */
+function liveOcrFrame(img){
+  var w=liveWorker;
+  var h=img.naturalHeight||img.height;
+  var pool=[];
+  function clean(t){return String(t||'').toUpperCase().replace(/＜/g,'<').replace(/ /g,'<').replace(/[^A-Z0-9<\n]/g,'')}
+  function cleanZone(t){return String(t||'').toUpperCase().replace(/＜/g,'<').replace(/[^A-Z0-9<\n]/g,'')}
+  /* 跨帧累积：每帧读出的候选行都并入 livePoolAcc，帧间互补 ——
+     单帧常有 1~2 个字符误读（如 Z→2、填充区混入 L），多帧总能凑出干净的一对 */
+  function addAcc(L){
+    if(L.length>=15&&!livePoolAcc.some(function(p){return p.s===L}))livePoolAcc.push({s:L});
+  }
+  function collect(r,band){
+    var t=clean(r&&r.data?r.data.text:'').split('\n');
+    t.forEach(function(L){if(L.length>=15&&!pool.some(function(p){return p.s===L})){pool.push({s:L,b:band});addAcc(L)}});
+  }
+  function tryLinesAcc(){
+    buildMrzEvidence(livePoolAcc.map(function(p){return p.s}));
+    var best=null;
+    for(var i=0;i<livePoolAcc.length;i++)for(var j=0;j<livePoolAcc.length;j++){
+      if(i===j)continue;
+      var m=parseMRZ(livePoolAcc[i].s+'\n'+livePoolAcc[j].s,15);
+      if(m.ok&&(!best||m.score>best.score))best=m;
+    }
+    return best;
+  }
+  var bands=detectMrzBands(img)||[];
+  var scan=mrzLineScan(img);
+  if(scan)scan.forEach(function(b){if(!bands.some(function(x){return Math.abs(x[0]-b[0])<12&&Math.abs(x[1]-b[1])<12}))bands.push(b)});
+  bands=bands.filter(function(b){return b[1]-b[0]<=h*0.45}).sort(function(a,b){return a[0]-b[0]});
+  [[0.82,0.86],[0.86,0.90]].forEach(function(f){
+    var fy0=Math.round(h*f[0]),fy1=Math.round(h*f[1]);
+    if(!bands.some(function(x){var ov=Math.min(x[1],fy1)-Math.max(x[0],fy0);return ov>=(fy1-fy0)*0.5}))bands.push([fy0,fy1]);
+  });
+  bands=bands.slice(-5);
+  if(!bands.length)return Promise.resolve(null);
+  var p=Promise.resolve();
+  bands.forEach(function(b,idx){
+    var y0=Math.max(0,b[0]-14),y1=Math.min(h,b[1]+10),bh=y1-y0;
+    var auto=Math.max(0.2,Math.min(2.5,42/bh));
+    [auto,3].forEach(function(sc){
+      if(sc<0.15||sc>3)return;
+      p=p.then(function(){
+        return w.setParameters({tessedit_pageseg_mode:'7',tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'}).then(function(){
+          return w.recognize(otsuCanvas(img,y0,y1,sc)).then(function(r){collect(r,idx)});
+        });
+      });
+    });
+  });
+  return p.then(function(){
+    var m=tryLinesAcc();
+    if(m)return m;
+    /* 整区兜底：隔帧跑（按累积池长度奇偶）省时，行同样并入累积池 */
+    if(livePoolAcc.length%2===1)return null;
+    return w.setParameters({tessedit_pageseg_mode:'6',tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<'}).then(function(){
+      return w.recognize(mrzZoneCanvas(img,true));
+    }).then(function(rz){
+      var rows=cleanZone(rz&&rz.data?rz.data.text:'').split('\n').filter(function(L){return L.length>=15});
+      rows.forEach(addAcc);
+      return tryLinesAcc();
+    }).catch(function(){return null});
+  });
+}
+/* 页面切到后台时自动停流（省电、避免摄像头指示灯常亮）；回到前台需重新点「实时扫描」 */
+try{document.addEventListener('visibilitychange',function(){if(document.hidden&&liveRunning)stopLiveScan(false)})}catch(e){}
 /* ===== 本机姓名记忆（各人手机只存各人核对过的姓名，页面本身不含任何资料）===== */
 function loadMyProfile(){
   try{return JSON.parse(localStorage.getItem('entryCardMyProfile')||'null')}catch(e){return null}
@@ -2622,6 +2788,8 @@ function init(){
     if(this.files&&this.files[0])handleOcrFile(this.files[0]);
     this.value='';
   });
+  $('#liveScanBtn').addEventListener('click',startLiveScan);
+  $('#liveStopBtn').addEventListener('click',function(){stopLiveScan(true)});
   $('#travelFile').addEventListener('change',function(){
     if(this.files&&this.files.length)handleTravelFiles(this.files);
     this.value='';
