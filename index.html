@@ -205,24 +205,21 @@ body.dest-th [data-f="passportExp"]{display:none}
 @media(max-width:520px){.kv > div{grid-template-columns:100%}.kv dt{border-right:none;border-bottom:1px dashed var(--line)}}
 
 /* ===== 护照识别上传 ===== */
-.ocr-zone{border:2px dashed var(--line-2);border-radius:14px;padding:30px 20px;text-align:center;background:linear-gradient(180deg,#FBFCFE 0%,#F4F7FB 100%);cursor:pointer;transition:border-color .2s,background .2s,box-shadow .2s;position:relative}
-.ocr-zone:hover,.ocr-zone.dragover{border-color:var(--navy3);background:var(--yellow-soft);box-shadow:0 6px 18px rgba(10,31,68,.08)}
-.ocr-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.ocr-zone .ic{width:56px;height:56px;margin:0 auto 12px;border-radius:14px;background:linear-gradient(150deg,var(--navy) 0%,var(--navy3) 100%);display:grid;place-items:center;box-shadow:0 6px 16px rgba(10,31,68,.25)}
-.ocr-zone .ic svg{width:27px;height:27px}
-.ocr-zone b{font-size:15.5px;display:block;margin-bottom:3px}
-.ocr-zone span{font-size:12.5px;color:var(--mut);display:block}
-/* ===== 实时扫描 ===== */
-.live-bar{margin-top:14px;display:flex;justify-content:center}
-.live-bar .btn{width:100%;max-width:420px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700}
-.live-wrap{margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#000;box-shadow:var(--shadow-sm)}
-.live-video-box{position:relative;width:100%;max-height:64vh;background:#000}
-.live-video-box video{display:block;width:100%;max-height:64vh;object-fit:cover}
-.live-guide{position:absolute;left:5%;right:5%;top:66%;bottom:3%;border:2px dashed rgba(255,199,44,.95);border-radius:12px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.28)}
-.live-guide::before{content:'机读区 MRZ 对准此框';position:absolute;left:50%;top:-26px;transform:translateX(-50%);color:#FFC72C;font-size:12.5px;font-weight:800;white-space:nowrap;background:rgba(10,31,68,.82);padding:3px 12px;border-radius:999px;letter-spacing:.3px}
-.live-ctrl{display:flex;align-items:center;gap:12px;background:#fff;padding:12px 14px}
-.live-ctrl .hint{flex:1;font-size:13px;color:var(--mut);margin:0}
-.live-ctrl .btn{flex:0 0 auto;padding:8px 14px}
+/* ===== 护照扫描（全屏） ===== */
+.scan-entry{text-align:center;padding:6px 0 2px}
+.scan-entry .scan-btn{width:100%;max-width:420px;display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:17px;padding:15px 18px}
+.scan-entry-tip{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.7}
+.scan-overlay{position:fixed;inset:0;z-index:2000;background:#000;display:flex;flex-direction:column}
+.scan-overlay[hidden]{display:none}
+.scan-top{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(10,31,68,.96);color:#fff;z-index:2}
+.scan-exit{flex:0 0 auto;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer}
+.scan-exit:active{background:rgba(255,255,255,.22)}
+.scan-title{flex:1;text-align:center;font-size:15px;font-weight:700;letter-spacing:.5px}
+.scan-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;min-height:0}
+.scan-stage video{width:100%;height:100%;object-fit:cover}
+.live-guide{position:absolute;left:12%;right:12%;top:64%;bottom:2%;border:2px dashed rgba(255,199,44,.95);border-radius:10px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.32)}
+.live-guide::before{content:'机读区 MRZ 对准此框';position:absolute;left:50%;top:-27px;transform:translateX(-50%);color:#FFC72C;font-size:12.5px;font-weight:800;white-space:nowrap;background:rgba(10,31,68,.85);padding:3px 12px;border-radius:999px;letter-spacing:.3px}
+.scan-bottom{background:rgba(10,31,68,.96);color:#FFC72C;padding:14px 16px;text-align:center;font-size:14px;font-weight:700;letter-spacing:.3px;z-index:2}
 .ocr-status{display:none;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--mut);box-shadow:var(--shadow-sm)}
 .ocr-status.show{display:flex;align-items:center;gap:10px}
 .ocr-status .spin{width:16px;height:16px;flex:0 0 16px;border:2.5px solid var(--line-2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite}
@@ -394,29 +391,14 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
 
     <!-- 护照识别 -->
     <div class="panel" id="ocrPanel">
-      <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 8V5a2 2 0 012-2h3M20 8V5a2 2 0 00-2-2h-3M4 16v3a2 2 0 002 2h3M20 16v3a2 2 0 01-2 2h-3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="10" r="3.2" stroke="#0A1F44" stroke-width="2"/><path d="M7.5 17c.7-2 2.4-3 4.5-3s3.8 1 4.5 3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/></svg>护照拍照，自动识别填入</h3>
-      <div class="en">Upload a photo of your passport data page — auto-recognize &amp; fill</div>
-      <div class="ocr-zone" id="ocrZone">
-        <input type="file" id="ocrFile" accept="image/*">
-        <div class="ic"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="15" rx="2.5" stroke="#FFC72C" stroke-width="2"/><circle cx="12" cy="11.5" r="2.6" stroke="#FFC72C" stroke-width="2"/><path d="M7 17c.8-1.8 2.8-2.8 5-2.8s4.2 1 5 2.8" stroke="#FFC72C" stroke-width="2" stroke-linecap="round"/><circle cx="17.2" cy="8" r="1.4" fill="#FFC72C"/></svg></div>
-        <b>点击上传 / 拍照，或把照片拖到这里</b>
-        <span>Click, take a photo, or drag an image here · JPG / PNG · 识别在本地进行，图片不会上传</span>
-      </div>
-      <div class="live-bar">
-        <button type="button" class="btn btn-navy" id="liveScanBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 7V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v1M20 17v1a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
-          实时扫描 · 对准护照自动识别
+      <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 8V5a2 2 0 012-2h3M20 8V5a2 2 0 00-2-2h-3M4 16v3a2 2 0 002 2h3M20 16v3a2 2 0 01-2 2h-3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="10" r="3.2" stroke="#0A1F44" stroke-width="2"/><path d="M7.5 17c.7-2 2.4-3 4.5-3s3.8 1 4.5 3" stroke="#0A1F44" stroke-width="2" stroke-linecap="round"/></svg>扫描护照，自动识别填入</h3>
+      <div class="en">Scan your passport data page — auto-recognize &amp; fill</div>
+      <div class="scan-entry">
+        <button type="button" class="btn btn-navy scan-btn" id="liveScanBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v1M20 17v1a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
+          扫描护照
         </button>
-      </div>
-      <div class="live-wrap" id="liveWrap" hidden>
-        <div class="live-video-box">
-          <video id="liveVideo" autoplay playsinline muted></video>
-          <div class="live-guide"></div>
-        </div>
-        <div class="live-ctrl">
-          <span class="hint" id="liveHint">对准护照资料页，机读区放进黄框，识别成功会自动填入</span>
-          <button type="button" class="btn btn-line" id="liveStopBtn">停止扫描</button>
-        </div>
+        <div class="scan-entry-tip">横持手机，让护照资料页铺满屏幕，机读区对准黄框；识别正确会自动停止并填入。全程在本机识别，照片不会上传。</div>
       </div>
       <div class="ocr-status" id="ocrStatus">
         <span class="spin"></span>
@@ -424,6 +406,18 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <span class="bar"><i id="ocrBar"></i></span>
       </div>
       <div class="notice" style="margin-bottom:0;margin-top:14px"><b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。</div>
+    </div>
+    <!-- 全屏扫描界面：横持手机，对准机读区自动识别 -->
+    <div class="scan-overlay" id="scanOverlay" hidden>
+      <div class="scan-top">
+        <button type="button" class="scan-exit" id="liveStopBtn">退出扫描</button>
+        <span class="scan-title">请横持手机 · 机读区对准黄框</span>
+      </div>
+      <div class="scan-stage">
+        <video id="liveVideo" autoplay playsinline muted></video>
+        <div class="live-guide"></div>
+      </div>
+      <div class="scan-bottom"><span id="liveHint">正在打开摄像头…</span></div>
     </div>
 
     <form id="mdacForm" novalidate>
@@ -1355,20 +1349,6 @@ function prepCanvas(img,frac){
   }catch(e){}
   return c;
 }
-function handleOcrFile(file){
-  if(ocrBusy){toast('正在识别中，请稍候 Still processing');return}
-  if(liveRunning){toast('正在实时扫描，请先点「停止扫描」再上传照片');return}
-  if(!file||!/^image\//.test(file.type)){toast('请选择图片文件 Please choose an image');return}
-  ocrBusy=true;
-  setOcr('正在加载识别引擎 Loading engine…',5);
-  loadTesseract(function(){
-    var url=URL.createObjectURL(file);
-    var img=new Image();
-    img.onload=function(){URL.revokeObjectURL(url);runOcr(img)};
-    img.onerror=function(){URL.revokeObjectURL(url);ocrBusy=false;setOcr('图片读取失败，请换一张照片 Failed to read image',0,'bad')};
-    img.src=url;
-  });
-}
 /* ===== 行程凭证识别：机票 / 酒店订单截图 → 自动填行程 ===== */
 var travelBusy=false;
 function setTravel(msg,cls){
@@ -2054,38 +2034,47 @@ function stopLiveStream(){
   if(liveStream){try{liveStream.getTracks().forEach(function(t){t.stop()})}catch(e){}liveStream=null}
   var v=document.getElementById('liveVideo');if(v){try{v.srcObject=null}catch(e){}}
 }
+function setLiveHint(msg){
+  var h=document.getElementById('liveHint');
+  if(h)h.textContent=msg;
+}
 function stopLiveScan(userStopped){
   liveRunning=false;
   if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
   stopLiveStream();
   if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
-  var w=document.getElementById('liveWrap');if(w)w.hidden=true;
-  if(userStopped)setOcr('已停止实时扫描。可重新对准扫描，或改用拍照上传。Live scan stopped',100,'ok');
+  var w=document.getElementById('scanOverlay');if(w)w.hidden=true;
+  if(userStopped)setOcr('已退出扫描。可重新扫描，或手动填写信息。Scan stopped',100,'ok');
 }
 function startLiveScan(){
   if(liveRunning)return;
   if(ocrBusy){toast('正在识别中，请稍候 Still processing');return}
   setOcr('正在打开摄像头 Opening camera…',3);
+  setLiveHint('正在打开摄像头…');
   liveRunning=true;liveTries=0;livePoolAcc=[];
-  function fail(msg){stopLiveScan(false);setOcr(msg,0,'bad')}
+  function fail(msg){stopLiveScan(false);setOcr(msg,0,'bad');setLiveHint(msg)}
   loadTesseract(function(){
     var md=navigator.mediaDevices||null;
-    if(!md||!md.getUserMedia){fail('此浏览器不支持实时摄像头，请改用拍照上传 Camera not supported');return}
+    if(!md||!md.getUserMedia){fail('此浏览器不支持摄像头，请换用系统浏览器（Safari / Chrome）打开本页 Camera not supported');return}
     md.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:960}},audio:false}).then(function(st){
       liveStream=st;
       var v=document.getElementById('liveVideo');
       v.srcObject=st;
       v.onloadedmetadata=function(){v.play().catch(function(){})};
-      document.getElementById('liveWrap').hidden=false;
-      setOcr('对准护照资料页（机读区放进黄框），识别成功会自动填入…',8);
+      document.getElementById('scanOverlay').hidden=false;
+      setOcr('横持手机，让机读区进入黄框，识别成功会自动填入…',8);
+      setLiveHint('正在启动识别引擎…');
       tessWorkerPromise('eng',1,null).then(function(w){
         liveWorker=w;
         return w.setParameters({tessedit_pageseg_mode:'6'});
-      }).then(function(){liveTick()}).catch(function(){
-        fail('实时识别引擎加载失败，请检查网络后重试，或改用拍照上传 Engine failed');
+      }).then(function(){
+        setLiveHint('请横持手机，让机读区进入黄框，保持平稳');
+        liveTick();
+      }).catch(function(){
+        fail('识别引擎加载失败，请检查网络后重试 Engine failed');
       });
     }).catch(function(){
-      fail('无法打开摄像头：请在浏览器设置里允许相机权限后重试，或改用拍照上传 Camera blocked');
+      fail('无法打开摄像头：请在浏览器设置里允许相机权限后重试 Camera blocked');
     });
   });
 }
@@ -2099,6 +2088,7 @@ function liveTick(){
   var c=document.createElement('canvas');c.width=w;c.height=h;
   c.getContext('2d').drawImage(v,0,0,w,h);
   setOcr('正在自动识别（第 '+liveTries+' 次）…保持平稳对准，识别成功会自动停止 Scanning '+liveTries+'…',8);
+  setLiveHint('正在自动识别（第 '+liveTries+' 次）…保持平稳，识别成功会自动填入');
   liveOcrFrame(c).then(function(m){
     liveBusy=false;
     if(m&&m.ok&&m.passportNo){
@@ -2106,7 +2096,7 @@ function liveTick(){
       if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
       stopLiveStream();
       if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
-      var w1=document.getElementById('liveWrap');if(w1)w1.hidden=true;
+      var w1=document.getElementById('scanOverlay');if(w1)w1.hidden=true;
       setOcr('已捕捉到清晰的机读区，正在核对信息并填入… Got it, verifying…',20);
       ocrBusy=true;
       runOcr(c);
@@ -2776,18 +2766,6 @@ function init(){
     try{window.open(url,'_blank')}catch(e){location.href=url}
   });
   $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
-  var zone=$('#ocrZone');
-  zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('dragover')});
-  zone.addEventListener('dragleave',function(e){e.preventDefault();zone.classList.remove('dragover')});
-  zone.addEventListener('drop',function(e){
-    e.preventDefault();zone.classList.remove('dragover');
-    var f=e.dataTransfer.files&&e.dataTransfer.files[0];
-    if(f)handleOcrFile(f);
-  });
-  $('#ocrFile').addEventListener('change',function(){
-    if(this.files&&this.files[0])handleOcrFile(this.files[0]);
-    this.value='';
-  });
   $('#liveScanBtn').addEventListener('click',startLiveScan);
   $('#liveStopBtn').addEventListener('click',function(){stopLiveScan(true)});
   $('#travelFile').addEventListener('change',function(){
