@@ -1516,6 +1516,65 @@ function pickStateCity(sq){
   for(var e in EN){if(up.indexOf(e)>-1)return{s:EN[e][0],c:EN[e][1]}}
   return null;
 }
+/* 携程 App 航班详情页兜底：日期为「11/09」斜杠格式，起降时间/航班号/城市分散在多行，
+   且中文常被识别成带空格的大段文本；先拆行并去空格再匹配 */
+function scanFlightDetail(texts){
+  var squ=function(t){return t.replace(/[ \t]/g,'')};
+  var lines=[];
+  (texts||[]).forEach(function(t){
+    String(t).split(/\n+/).forEach(function(L){
+      var s=squ(L);
+      if(s&&s.length>1)lines.push(s);
+    });
+  });
+  var isDetail=lines.some(function(L){return /预计到达|预计起飞/.test(L)});
+  if(!isDetail)return null;
+  var year=new Date().getFullYear();
+  function slashDate(s){
+    var m=s.match(/(\d{1,2})\/(\d{1,2})/);
+    if(!m)return null;
+    var mm=+m[1],dd=+m[2];
+    if(mm<1||mm>12||dd<1||dd>31)return null;
+    return year+'-'+(mm<10?'0'+mm:mm)+'-'+(dd<10?'0'+dd:dd);
+  }
+  var arrLine=null;
+  for(var i=0;i<lines.length;i++){if(/预计到达/.test(lines[i])){arrLine=lines[i];break}}
+  var arrDate=null;
+  if(arrLine){
+    // 取「预计到达」字样之后的第一个斜杠日期（该行常同时含「预计起飞11/09 预计到达11/09」）
+    var pos=arrLine.indexOf('预计到达');
+    arrDate=pos>-1?slashDate(arrLine.slice(pos+4)):null;
+  }
+  if(!arrDate){
+    // 全文斜杠日期序列兜底：单程票一个；多个时取最后一个（到达一般不早于起飞）
+    var ds=[];
+    lines.forEach(function(L){var dd=slashDate(L);if(dd&&ds.indexOf(dd)<0)ds.push(dd)});
+    if(ds.length===1)arrDate=ds[0];
+    else if(ds.length>=2)arrDate=ds[ds.length-1];
+  }
+  // 航班号：全文最后一个航班号（详情页一般只有本航班）
+  var cands=[];
+  lines.forEach(function(L){
+    var cs=L.match(/[A-Z]{2}\d{3,4}/g);
+    if(cs){for(var c=0;c<cs.length;c++)cands.push(cs[c])}
+  });
+  var flight=cands.length?cands[cands.length-1]:null;
+  // 出发城市：优先机场别称行（广州白云T3→广州），其次中国城市名
+  var from=null;
+  var AIR={'白云':'广州','浦东':'上海','虹桥':'上海','大兴':'北京','首都':'北京','宝安':'深圳','双流':'成都','天府':'成都','萧山':'杭州','高崎':'厦门','长水':'昆明','江北':'重庆','咸阳':'西安','滨海':'天津','天河':'武汉','黄花':'长沙','禄口':'南京','胶东':'青岛','美兰':'海口','凤凰':'三亚','长乐':'福州','新郑':'郑州','地窝堡':'乌鲁木齐'};
+  lines.forEach(function(L){
+    if(from)return;
+    for(var k in AIR){if(L.indexOf(k)>-1){from=AIR[k];return}}
+  });
+  if(!from){
+    var CITIES=['广州','北京','上海','深圳','成都','杭州','厦门','昆明','重庆','西安','天津','武汉','长沙','南京','青岛','海口','三亚','福州','郑州','乌鲁木齐'];
+    lines.forEach(function(L){
+      if(from)return;
+      for(var i2=0;i2<CITIES.length;i2++){if(L.indexOf(CITIES[i2])>-1){from=CITIES[i2];return}}
+    });
+  }
+  return {arrival:arrDate,flight:flight,from:from};
+}
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice()}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
@@ -1540,15 +1599,35 @@ function applyTravelTexts(texts){
       if(mm[1].indexOf('吉隆')>-1){if(!ret)ret=t;break}
     }
   });
+  // 携程 App 航班详情页兜底：先于订单页第二遍兜底执行（否则整段文本会被误当作订单行），
+  // 命中后直接填入；返程/酒店仍按末尾规则自动生成
+  var fd=scanFlightDetail(texts);
+  var fdHit=false;
+  if(!inbound&&fd&&(fd.arrival||fd.flight)){
+    fdHit=true;
+    if(fd.arrival){
+      if(travelSetField('f-arrival',fd.arrival))done.push('抵达 '+fd.arrival);
+      else warn.push('抵达日期 '+fd.arrival+' 不在可选范围');
+    }
+    if(fd.flight){travelSetField('f-flight',fd.flight);done.push('航班 '+fd.flight)}
+    if(fd.from){
+      var fdMap={'广州':'CHN','北京':'CHN','上海':'CHN','深圳':'CHN','成都':'CHN','杭州':'CHN','厦门':'CHN','昆明':'CHN','重庆':'CHN','西安':'CHN','天津':'CHN','武汉':'CHN','长沙':'CHN','南京':'CHN','青岛':'CHN','海口':'CHN','三亚':'CHN','福州':'CHN','郑州':'CHN','乌鲁木齐':'CHN'};
+      var fdCode=fdMap[fd.from]||'CHN';
+      if(fdCode&&travelSetField('f-lastport',fdCode))done.push('出发地 '+fd.from);
+    }
+    if(travelSetField('f-mode','Air'))done.push('出行方式 Air');
+  }
   if(!inbound||!ret){
-    texts.forEach(function(t){
-      if(inbound&&ret)return;
-      if(t===inbound||t===ret||t===hotel)return;
-      var sq=squash(t);
-      if(!/[A-Z]{2}\d{3,4}/.test(sq)||!/月[\s\S]*日/.test(sq))return;
-      if(!inbound){inbound=t}
-      else if(!ret){ret=t}
-    });
+    if(!fdHit){
+      texts.forEach(function(t){
+        if(inbound&&ret)return;
+        if(t===inbound||t===ret||t===hotel)return;
+        var sq=squash(t);
+        if(!/[A-Z]{2}\d{3,4}/.test(sq)||!/月[\s\S]*日/.test(sq))return;
+        if(!inbound){inbound=t}
+        else if(!ret){ret=t}
+      });
+    }
   }
   function mdacDate(m1,m2){
     var y=new Date().getFullYear();
