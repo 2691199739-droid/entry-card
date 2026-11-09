@@ -522,7 +522,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109d</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109e</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2591,8 +2591,9 @@ function bmMy(d,maxTries){
     function run(){
       round++;
       closeModals();
-      var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
-      p.then(function(r){
+      /* 官方页可能改版（旧 id 与 label 两种结构都可能出现）：两条路径都跑，取填入项多的结果 */
+      Promise.all([directFill(D),genericFill(D,d)]).then(function(rs){
+        var r=rs[0].n>=rs[1].n?rs[0]:rs[1];
         if(round<5&&r.miss&&r.miss.length){setTimeout(run,1200);return}
         var m=r.miss&&r.miss.length
           ?('MDAC 助手：已自动填入，未能填入：'+r.miss.join(', ')+'，请手动补填。请核对后自行提交。')
@@ -2919,16 +2920,6 @@ function init(){
   /* 一键跳转：链接带填表码，官方页 Stay 脚本读取后自动填入（无需粘贴） */
   $('#btnJumpFill').addEventListener('click',function(){
     if(!$('#confirmOK').checked){$('#confirmLine').classList.add('errtext');toast('请先勾选确认声明 Please tick the confirmation');return}
-    /* 环境自检：iPhone 上只有 Safari 会运行 Stay 脚本；微信/QQ/Chrome 等内置浏览器打开官方页不会自动填 */
-    var ua=navigator.userAgent;
-    var iOS=/(iPhone|iPad|iPod)/i.test(ua);
-    var isSafari=/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger|Wechat|QQ\//i.test(ua);
-    if(iOS&&!isSafari){
-      toast('当前不是 Safari 浏览器，自动填表不会生效：请复制本页地址，粘贴到 Safari 打开后，再点「一键跳转」');
-      var here=location.href;
-      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(here).then(function(){toast('已复制本页地址：请打开 Safari 粘贴并访问，再点「一键跳转」')},function(){})}
-      return;
-    }
     var d=validate();
     if(!d){location.hash='#/apply';return}
     d=finalizeDraft(d);
@@ -2938,6 +2929,24 @@ function init(){
     var url=(DEST==='TH'
       ?'https://tdac.immigration.go.th/visitors/arrival'
       :'https://imigresen-online.imi.gov.my/mdac/main')+'#mdacfill='+encodeURIComponent(code);
+    /* 环境自检：iPhone 上只有 Safari 会运行 Stay 脚本；
+       主屏幕图标打开的是独立小窗口（PWA），微信/QQ/Chrome 等内置浏览器也不会自动填。
+       这些环境改为「复制带资料的跳转链接」，用户去 Safari 粘贴打开即自动填入。 */
+    var ua=navigator.userAgent;
+    var iOS=/(iPhone|iPad|iPod)/i.test(ua);
+    var isPWA=false;
+    try{isPWA=!!navigator.standalone||!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){}
+    var isSafari=/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger|Wechat|QQ\//i.test(ua);
+    if(iOS&&isPWA){
+      toast('主屏幕图标版无法自动填表（此环境不运行填表脚本）：已复制带资料的跳转链接，请打开 Safari 粘贴访问');
+      copyText(url,'已复制跳转链接：请打开 Safari 粘贴访问，进入申报表单后即自动填入','复制失败，请重试');
+      return;
+    }
+    if(iOS&&!isSafari){
+      toast('当前不是 Safari 浏览器，自动填表不会生效：已复制带资料的跳转链接，请粘贴到 Safari 打开');
+      copyText(url,'已复制跳转链接：请打开 Safari 粘贴访问，进入申报表单后即自动填入','复制失败，请重试');
+      return;
+    }
     toast(DEST==='TH'
       ?'已跳转泰国官方页：完成人机验证并点 Arrival Card，表单一出现即自动填入'
       :'已跳转马来西亚官网：公告弹窗会自动关闭，请点官网菜单 REGISTER 进入申报表单页，表单一出现即自动填入');
