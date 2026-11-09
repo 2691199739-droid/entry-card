@@ -520,7 +520,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109i</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109j</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2339,23 +2339,6 @@ function liveOcrFrame(img){
 }
 /* 页面切到后台时自动停流（省电、避免摄像头指示灯常亮）；回到前台需重新点「实时扫描」 */
 try{document.addEventListener('visibilitychange',function(){if(document.hidden&&liveRunning)stopLiveScan(false)})}catch(e){}
-/* ===== 环境自检横幅：主屏幕独立窗口（PWA）里填表脚本不运行，提示用户换图标 ===== */
-(function(){
-  try{
-    var uaE=navigator.userAgent;
-    if(/(iPhone|iPad|iPod)/i.test(uaE)){
-      var isPWA=false;
-      try{isPWA=!!navigator.standalone||!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){}
-      if(isPWA){
-        var b=document.createElement('div');
-        b.textContent='注意：当前是旧版主屏幕图标（独立窗口），自动填表不可用。请删除本图标，用 Safari 打开本页重新「添加到主屏幕」。';
-        b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#B00020;color:#fff;font-size:13px;line-height:1.6;padding:8px 12px;text-align:center';
-        document.body.appendChild(b);
-        setTimeout(function(){try{b.remove()}catch(e){}},9000);
-      }
-    }
-  }catch(e){}
-})();
 /* ===== 本机姓名记忆（各人手机只存各人核对过的姓名，页面本身不含任何资料）===== */
 function loadMyProfile(){
   try{return JSON.parse(localStorage.getItem('entryCardMyProfile')||'null')}catch(e){return null}
@@ -2944,22 +2927,17 @@ function init(){
     var url=(DEST==='TH'
       ?'https://tdac.immigration.go.th/visitors/arrival'
       :'https://imigresen-online.imi.gov.my/mdac/main')+'#mdacfill='+encodeURIComponent(code);
-    /* 环境自检：iPhone 上只有 Safari 会运行 Stay 脚本；
-       主屏幕图标打开的是独立小窗口（PWA），微信/QQ/Chrome 等内置浏览器也不会自动填。
-       这些环境改为「复制带资料的跳转链接」，用户去 Safari 粘贴打开即自动填入。 */
+    /* 环境自检：iPhone 网页版（Safari）直接跳转自动填；
+       主屏幕图标（独立窗口）与微信等内置浏览器不运行填表脚本，改为复制带资料的链接，
+       去 Safari 粘贴打开即自动录入 */
     var ua=navigator.userAgent;
     var iOS=/(iPhone|iPad|iPod)/i.test(ua);
     var isPWA=false;
     try{isPWA=!!navigator.standalone||!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){}
     var isSafari=/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger|Wechat|QQ\//i.test(ua);
-    if(iOS&&isPWA){
-      toast('这是旧版主屏幕图标（独立窗口），自动填表失效：请长按删除此图标，用 Safari 打开本页重新「添加到主屏幕」一次，以后就能一键跳转自动填表');
-      copyText(url,'旧图标无法自动填表：本次可先在 Safari 粘贴打开完成办理；重新添加图标后即恢复一键跳转','复制失败，请重试');
-      return;
-    }
-    if(iOS&&!isSafari){
-      toast('当前不是 Safari 浏览器，自动填表不会生效：已复制带资料的跳转链接，请粘贴到 Safari 打开');
-      copyText(url,'已复制跳转链接：请打开 Safari 粘贴访问，进入申报表单后即自动填入','复制失败，请重试');
+    if(iOS&&(!isSafari||isPWA)){
+      toast('已复制跳转链接：请打开 Safari 粘贴访问，表单自动录入');
+      copyText(url,'已复制跳转链接：打开 Safari 粘贴访问，表单自动录入','复制失败，请重试');
       return;
     }
     toast(DEST==='TH'
