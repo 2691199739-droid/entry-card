@@ -1394,23 +1394,22 @@ function handleTravelFiles(files){
             var ctx=c.getContext('2d');
             try{ctx.imageSmoothingQuality='high'}catch(e2){}
             ctx.drawImage(img,0,0,c.width,c.height);
-            return w.recognize(c).then(function(r){
-              var full=(r&&r.data&&r.data.text)||'';
-              // 第一张图：顶部 15% 区域再放大 2.5 倍单独识别（航班号通常在顶部标题行，
-              // 手机端小字数字易被误读为字母，局部放大可保住数字）
-              if(i!==0)return full;
-              var ch0=Math.max(40,Math.round(h0*0.15));
-              var mag=2.5;
-              var c2=document.createElement('canvas');
-              c2.width=Math.round(w0*mag);c2.height=Math.round(ch0*mag);
-              var ctx2=c2.getContext('2d');
-              try{ctx2.imageSmoothingQuality='high'}catch(e3){}
-              ctx2.drawImage(img,0,0,w0,ch0,0,0,c2.width,c2.height);
-              return w.recognize(c2).then(function(r2){
-                var top=(r2&&r2.data&&r2.data.text)||'';
-                return top?(full?full+'\n===TOP===\n'+top:full):full;
-              });
-            });
+            // 灰度 + 对比度拉伸：显著提升小字号数字/字母识别稳定性（彩色版易把 113 误读为字母）
+            try{
+              var im2=ctx.getImageData(0,0,c.width,c.height),px2=im2.data,mn=255,mx=0,k=0;
+              for(k=0;k<px2.length;k+=4){
+                var g2=Math.round(0.299*px2[k]+0.587*px2[k+1]+0.114*px2[k+2]);
+                if(g2<mn)mn=g2;if(g2>mx)mx=g2;
+                px2[k]=px2[k+1]=px2[k+2]=g2;
+              }
+              var span2=Math.max(1,mx-mn);
+              for(k=0;k<px2.length;k+=4){
+                var v2=Math.round((px2[k]-mn)*255/span2);
+                px2[k]=px2[k+1]=px2[k+2]=v2;
+              }
+              ctx.putImageData(im2,0,0);
+            }catch(e4){}
+            return w.recognize(c).then(function(r){return (r&&r.data&&r.data.text)||''});
           });
         }).then(function(t){if(t)texts.push(t)});
       });
