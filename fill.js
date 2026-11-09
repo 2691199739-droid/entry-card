@@ -416,7 +416,16 @@ function bmTh(d){
         try{raw=decodeURIComponent(hm[1])}catch(e){raw=hm[1]}
         if(raw){
           d=dec(raw);
-          if(d&&d.passport){try{sessionStorage.setItem('mdac_fill',raw)}catch(e){}}
+          if(d&&d.passport){
+            try{sessionStorage.setItem('mdac_fill',raw)}catch(e){}
+            /* 隐私：填表码含个人资料，解析成功后立即从地址栏移除，
+               避免留在浏览器历史记录/最近打开列表里 */
+            try{
+              if(location.hash&&location.hash.indexOf('mdacfill')>-1){
+                history.replaceState(null,'',location.pathname+location.search);
+              }
+            }catch(e2){}
+          }
         }
       }
     }catch(e){}
