@@ -161,8 +161,10 @@ function bmMy(d,maxTries){
     function run(){
       round++;
       closeModals();
-      var p=(g('name')||g('passNo')||g('arrDt')||g('nationality'))?directFill(D):genericFill(D,d);
-      p.then(function(r){
+      /* 官方页可能改版（旧 id 与 label 两种结构都可能出现）：
+         旧 id 直填与通用 label 匹配两条路径都跑，取填入项多的结果 */
+      Promise.all([directFill(D),genericFill(D,d)]).then(function(rs){
+        var r=rs[0].n>=rs[1].n?rs[0]:rs[1];
         if(round<5&&r.miss&&r.miss.length){setTimeout(run,1200);return}
         var m=r.miss&&r.miss.length
           ?('MDAC 助手：已自动填入，未能填入：'+r.miss.join(', ')+'，请手动补填。请核对后自行提交。')
