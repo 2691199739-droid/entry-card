@@ -522,7 +522,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109c</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109d</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2919,6 +2919,16 @@ function init(){
   /* 一键跳转：链接带填表码，官方页 Stay 脚本读取后自动填入（无需粘贴） */
   $('#btnJumpFill').addEventListener('click',function(){
     if(!$('#confirmOK').checked){$('#confirmLine').classList.add('errtext');toast('请先勾选确认声明 Please tick the confirmation');return}
+    /* 环境自检：iPhone 上只有 Safari 会运行 Stay 脚本；微信/QQ/Chrome 等内置浏览器打开官方页不会自动填 */
+    var ua=navigator.userAgent;
+    var iOS=/(iPhone|iPad|iPod)/i.test(ua);
+    var isSafari=/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger|Wechat|QQ\//i.test(ua);
+    if(iOS&&!isSafari){
+      toast('当前不是 Safari 浏览器，自动填表不会生效：请复制本页地址，粘贴到 Safari 打开后，再点「一键跳转」');
+      var here=location.href;
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(here).then(function(){toast('已复制本页地址：请打开 Safari 粘贴并访问，再点「一键跳转」')},function(){})}
+      return;
+    }
     var d=validate();
     if(!d){location.hash='#/apply';return}
     d=finalizeDraft(d);
