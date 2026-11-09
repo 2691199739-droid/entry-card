@@ -1577,6 +1577,21 @@ function scanFlightDetail(texts){
   else if(loose.length)flight=loose[loose.length-1];
   else if(dCands.length)flight=dCands[dCands.length-1];
   else if(dLoose.length)flight=dLoose[dLoose.length-1];
+  if(!flight){
+    // 终极兜底：把每行所有字母数字连成序列，5~6 位滑窗归一后按航班号格式验证
+    // （应对 OCR 把航班号拆散/混入符号，如「AK 丨13」→ 序列 AK13 之外的乱码拼接）
+    var slid=[];
+    lines.forEach(function(L){
+      var seq=L.replace(/[^A-Za-z0-9]/g,'');
+      for(var i=0;i<seq.length;i++){
+        for(var w=5;w<=6&&i+w<=seq.length;w++){
+          var n2=normNo(seq.slice(i,i+w));
+          if(/^[A-Z]{2}\d{3,4}$/.test(n2)||/^[0-9][A-Z]\d{3,4}$/.test(n2))slid.push(n2);
+        }
+      }
+    });
+    if(slid.length)flight=slid[slid.length-1];
+  }
   // 出发城市：优先机场别称行（广州白云T3→广州），其次中国城市名
   var from=null;
   var AIR={'白云':'广州','浦东':'上海','虹桥':'上海','大兴':'北京','首都':'北京','宝安':'深圳','双流':'成都','天府':'成都','萧山':'杭州','高崎':'厦门','长水':'昆明','江北':'重庆','咸阳':'西安','滨海':'天津','天河':'武汉','黄花':'长沙','禄口':'南京','胶东':'青岛','美兰':'海口','凤凰':'三亚','长乐':'福州','新郑':'郑州','地窝堡':'乌鲁木齐'};
@@ -1591,14 +1606,14 @@ function scanFlightDetail(texts){
       for(var i2=0;i2<CITIES.length;i2++){if(L.indexOf(CITIES[i2])>-1){from=CITIES[i2];return}}
     });
   }
-  // 含「航/班/航班号特征」的行（去空格后），未识别到航班号时用于提示诊断
+  // 含「航/班」字或 4 位以上字母数字的行（去空格后），未识别到航班号时用于提示诊断
   var flRows=[];
   lines.forEach(function(L){
-    if(/航|班/.test(L)||/[A-Z]{2}\d{3,4}/.test(L)||/[0-9][A-Z]\d{3,4}/.test(L)){
-      flRows.push(L.length>26?L.slice(0,26)+'…':L);
+    if(/航|班/.test(L)||/[A-Za-z0-9]{4,}/.test(L)){
+      flRows.push(L.length>30?L.slice(0,30)+'…':L);
     }
   });
-  return {arrival:arrDate,flight:flight,from:from,flRows:flRows.slice(0,4)};
+  return {arrival:arrDate,flight:flight,from:from,flRows:flRows.slice(0,6)};
 }
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
