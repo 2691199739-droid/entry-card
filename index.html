@@ -1680,7 +1680,7 @@ function applyTravelTexts(texts){
         if(inbound&&ret)return;
         if(t===inbound||t===ret||t===hotel)return;
         var sq=squash(t);
-        if(!/[A-Z]{2}\d{3,4}/.test(sq)||!/月[\s\S]*日/.test(sq))return;
+        if((!/[A-Z]{2}\d{3,4}/.test(sq)&&!/[0-9][A-Z]\d{3,4}/.test(sq))||!/月[\s\S]*日/.test(sq))return;
         if(!inbound){inbound=t}
         else if(!ret){ret=t}
       });
@@ -1712,9 +1712,10 @@ function applyTravelTexts(texts){
     }
     var kidx=sq.indexOf('KUL');
     var seg=(kidx>-1?sq.slice(0,kidx):sq).split('\n').filter(function(L){return L.indexOf('承运')<0}).join('\n');
-    var codes=seg.match(/[A-Z]{2}\d{3,4}/g);
+    function flightCands(s){return (s.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(s.match(/[0-9][A-Z]\d{3,4}/g)||[])}
+    var codes=flightCands(seg);
     var fn=codes?codes[codes.length-1]:null;
-    if(!fn){var all2=sq.match(/[A-Z]{2}\d{3,4}/g);if(all2)fn=all2[all2.length-1]}
+    if(!fn){var all2=flightCands(sq);if(all2.length)fn=all2[all2.length-1]}
     if(!fn){
       // 中转/多段订单：航班号分散在相邻行（inbound 行往往只有「日期 + 城市对」），
       // 从全部识别文本里排除「实际承运」等备注行后，取最后一个航班号（即抵达目的地的航段）
@@ -1723,8 +1724,8 @@ function applyTravelTexts(texts){
         if(t2===inbound||t2===ret||t2===hotel)return;
         var s2=squash(t2);
         if(/承运|共享/.test(s2))return;
-        var cs=s2.match(/[A-Z]{2}\d{3,4}/g);
-        if(cs){for(var c=0;c<cs.length;c++)cands.push(cs[c])}
+        var cs=flightCands(s2);
+        if(cs.length){for(var c=0;c<cs.length;c++)cands.push(cs[c])}
       });
       if(cands.length)fn=cands[cands.length-1];
     }
