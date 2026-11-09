@@ -218,8 +218,6 @@ body.dest-th [data-f="passportExp"]{display:none}
 .scan-entry .scan-btn{width:100%;max-width:420px;display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:17px;padding:15px 18px}
 .scan-entry-tip{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.7}
 .scan-overlay{position:fixed;left:0;top:0;width:100%;height:100%;z-index:2000;background:#000;display:flex;flex-direction:column;overflow:hidden}
-/* 「旋转画面」按钮激活时整体转 90°（横持手机但系统方向锁定时用） */
-.scan-overlay.scan-rot .live-guide{left:72%;right:4%;top:18%;bottom:18%}
 .scan-overlay[hidden]{display:none}
 .scan-top{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(10,31,68,.96);color:#fff;z-index:2}
 .scan-exit{flex:0 0 auto;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer}
@@ -409,7 +407,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 7V6a2 2 0 012-2h2M16 4h2a2 2 0 012 2v1M20 17v1a2 2 0 01-2 2h-2M8 20H6a2 2 0 01-2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg>
           扫描护照
         </button>
-        <div class="scan-entry-tip">横持手机，让护照资料页铺满屏幕，机读区对准黄框；识别正确会自动停止并填入。全程在本机识别，照片不会上传。</div>
+        <div class="scan-entry-tip">对准护照资料页，让机读区进入黄框；识别正确会自动停止并填入。全程在本机识别，照片不会上传。</div>
       </div>
       <div class="ocr-status" id="ocrStatus">
         <span class="spin"></span>
@@ -418,12 +416,11 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
       </div>
       <div class="notice" style="margin-bottom:0;margin-top:14px"><b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。</div>
     </div>
-    <!-- 全屏扫描界面：横持手机，对准机读区自动识别 -->
+    <!-- 全屏扫描界面：对准机读区自动识别 -->
     <div class="scan-overlay" id="scanOverlay" hidden>
       <div class="scan-top">
         <button type="button" class="scan-exit" id="liveStopBtn">退出扫描</button>
-        <span class="scan-title">请横持手机 · 机读区对准黄框</span>
-        <button type="button" class="scan-exit" id="liveRotBtn">旋转画面</button>
+        <span class="scan-title">机读区对准黄框 · 识别成功自动录入</span>
       </div>
       <div class="scan-stage">
         <video id="liveVideo" autoplay playsinline muted></video>
@@ -2050,33 +2047,18 @@ function setLiveHint(msg){
   var h=document.getElementById('liveHint');
   if(h)h.textContent=msg;
 }
-/* 固定横版：扫描界面始终横向显示，只能横持手机使用。
-   竖屏时整体旋转 90° 变横版；横屏时自然全屏。
-   开了方向锁定导致画面方向不对时，点「旋转画面」手动摆正。
-   尺寸按可视区精确设置，确保全屏覆盖不留缝。 */
+/* 竖屏扫描：界面正常竖向显示，尺寸按可视区精确设置，确保全屏覆盖不留缝 */
 function fitScanOverlay(){
   var ov=document.getElementById('scanOverlay');
   if(!ov||ov.hidden)return;
   var vv=window.visualViewport||window;
   var w=vv.width,h=vv.height;
-  if(ov.dataset.manual!=='1'){
-    ov.classList.toggle('scan-rot',h>w);
-  }
-  if(ov.classList.contains('scan-rot')){
-    ov.style.width=h+'px';
-    ov.style.height=w+'px';
-    ov.style.left='100%';
-    ov.style.top='0px';
-    ov.style.transform='rotate(90deg)';
-    ov.style.transformOrigin='0 0';
-  }else{
-    ov.style.width=w+'px';
-    ov.style.height=h+'px';
-    ov.style.left='0px';
-    ov.style.top='0px';
-    ov.style.transform='none';
-    ov.style.transformOrigin='';
-  }
+  ov.style.width=w+'px';
+  ov.style.height=h+'px';
+  ov.style.left='0px';
+  ov.style.top='0px';
+  ov.style.transform='none';
+  ov.style.transformOrigin='';
   try{window.scrollTo(0,0)}catch(e){}
 }
 try{
@@ -2086,26 +2068,12 @@ try{
     window.visualViewport.addEventListener('resize',fitScanOverlay);
   }
 }catch(e){}
-/* 进入扫描时尝试锁定横屏（PWA 安装版 / 支持的全屏场景生效；网页普通浏览时部分浏览器不支持，则靠提示让用户横持） */
-function lockLandscape(){
-  try{
-    if(screen.orientation&&screen.orientation.lock){
-      screen.orientation.lock('landscape').catch(function(){});
-    }
-  }catch(e){}
-}
-function unlockLandscape(){
-  try{
-    if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();
-  }catch(e){}
-}
 function stopLiveScan(userStopped){
   liveRunning=false;
   if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
   stopLiveStream();
   if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
   var w=document.getElementById('scanOverlay');if(w)w.hidden=true;
-  unlockLandscape();
   if(userStopped)setOcr('已退出扫描。可重新扫描，或手动填写信息。Scan stopped',100,'ok');
 }
 function startLiveScan(){
@@ -2124,17 +2092,14 @@ function startLiveScan(){
       v.srcObject=st;
       v.onloadedmetadata=function(){v.play().catch(function(){})};
       document.getElementById('scanOverlay').hidden=false;
-      delete document.getElementById('scanOverlay').dataset.manual;
-      document.getElementById('scanOverlay').classList.remove('scan-rot');
       fitScanOverlay();
-      lockLandscape();
-      setOcr('横持手机，让机读区进入黄框，识别成功会自动填入…',8);
+      setOcr('让机读区进入黄框，识别成功会自动填入…',8);
       setLiveHint('正在启动识别引擎…');
       tessWorkerPromise('eng',1,null).then(function(w){
         liveWorker=w;
         return w.setParameters({tessedit_pageseg_mode:'6'});
       }).then(function(){
-        setLiveHint('请横持手机，让机读区进入黄框，保持平稳');
+        setLiveHint('请让机读区进入黄框，保持平稳');
         liveTick();
       }).catch(function(){
         fail('识别引擎加载失败，请检查网络后重试 Engine failed');
@@ -2834,18 +2799,6 @@ function init(){
   $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
   $('#liveScanBtn').addEventListener('click',startLiveScan);
   $('#liveStopBtn').addEventListener('click',function(){stopLiveScan(true)});
-  $('#liveRotBtn').addEventListener('click',function(){
-    var ov=document.getElementById('scanOverlay');
-    if(!ov)return;
-    if(ov.dataset.manual!=='1'){
-      ov.dataset.manual='1';
-      ov.classList.toggle('scan-rot');
-    }else{
-      ov.dataset.manual='0';
-      ov.classList.toggle('scan-rot');
-    }
-    fitScanOverlay();
-  });
   $('#travelFile').addEventListener('change',function(){
     if(this.files&&this.files.length)handleTravelFiles(this.files);
     this.value='';
