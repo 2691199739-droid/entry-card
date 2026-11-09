@@ -5,7 +5,11 @@
 // @description  配合「入境卡助手」使用：从助手页点「一键跳转」带码打开官方页，进入申报表单后全部资料自动填入，无需粘贴。助手页面：https://2691199739-droid.github.io/entry-card/
 // @author       entry-card-helper
 // @match        https://imigresen-online.imi.gov.my/*
+// @match        http://imigresen-online.imi.gov.my/*
 // @match        https://tdac.immigration.go.th/*
+// @match        http://tdac.immigration.go.th/*
+// @include      *://imigresen-online.imi.gov.my/*
+// @include      *://tdac.immigration.go.th/*
 // @run-at       document-idle
 // @grant        none
 // @updateURL    https://2691199739-droid.github.io/entry-card/fill.user.js
