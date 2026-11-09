@@ -2,7 +2,7 @@
    策略：同源 GET 走「网络优先」，联网时永远拿最新（保证「一处更新、人人最新」）；
    导航请求强制绕过 HTTP 缓存（no-store），避免手机浏览器缓存旧版页面；
    断网时回退缓存。跨域资源（tesseract 引擎 / 语言包等 CDN）直接放行，不缓存不拦截。 */
-const CACHE = 'mdac-pwa-v2';
+const CACHE = 'mdac-pwa-v3';
 self.addEventListener('install', (e) => { self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
   e.waitUntil(
@@ -25,7 +25,7 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE).then((c) => c.put(req, cp));
         }
         return res;
-      }).catch(() => caches.match(req, { ignoreSearch: true }))
+      }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('./index.html')))
     );
   }
 });
