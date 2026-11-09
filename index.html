@@ -1593,7 +1593,7 @@ function scanFlightDetail(texts){
   return {arrival:arrDate,flight:flight,from:from};
 }
 function applyTravelTexts(texts){
-  try{window.__travelTexts=(texts||[]).slice()}catch(e0){}
+  try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
   var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
   function squash(t){return t.replace(/[ \t]/g,'')}
@@ -1627,6 +1627,7 @@ function applyTravelTexts(texts){
       else warn.push('抵达日期 '+fd.arrival+' 不在可选范围');
     }
     if(fd.flight){travelSetField('f-flight',fd.flight);done.push('航班 '+fd.flight)}
+    else if(fd.arrival)warn.push('未识别到航班号，请手动填写班次或换更清晰的截图');
     if(fd.from){
       var fdMap={'广州':'CHN','北京':'CHN','上海':'CHN','深圳':'CHN','成都':'CHN','杭州':'CHN','厦门':'CHN','昆明':'CHN','重庆':'CHN','西安':'CHN','天津':'CHN','武汉':'CHN','长沙':'CHN','南京':'CHN','青岛':'CHN','海口':'CHN','三亚':'CHN','福州':'CHN','郑州':'CHN','乌鲁木齐':'CHN'};
       var fdCode=fdMap[fd.from]||'CHN';
