@@ -224,7 +224,7 @@ body.dest-th [data-f="passportExp"]{display:none}
 .scan-stage{position:relative;flex:1;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;min-height:0}
 /* contain：摄像头画面完整显示不裁切（护照完整在画面内，机读区不会被切掉），两侧自动留黑边 */
 .scan-stage video{width:100%;height:100%;object-fit:contain;background:#000}
-.live-guide{position:absolute;left:2.5%;right:2.5%;top:82%;bottom:6%;border:2px dashed rgba(255,199,44,.95);border-radius:10px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.32)}
+.live-guide{position:absolute;left:2.5%;right:2.5%;top:78%;bottom:8%;border:2px dashed rgba(255,199,44,.95);border-radius:10px;pointer-events:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.32)}
 .live-guide::before{content:'机读区 MRZ 对准此框';position:absolute;left:50%;top:-27px;transform:translateX(-50%);color:#FFC72C;font-size:12.5px;font-weight:800;white-space:nowrap;background:rgba(10,31,68,.85);padding:3px 12px;border-radius:999px;letter-spacing:.3px}
 .scan-bottom{background:rgba(10,31,68,.96);color:#FFC72C;padding:14px 16px;text-align:center;font-size:14px;font-weight:700;letter-spacing:.3px;z-index:2}
 .ocr-status{display:none;margin-top:14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--mut);box-shadow:var(--shadow-sm)}
@@ -520,7 +520,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109j</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109k</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2173,7 +2173,7 @@ function runOcr(img){
    轻量帧识别（liveOcrFrame）只负责判定「这一帧是否清晰完整」，一旦命中立即把该帧
    交给完整主管线 runOcr 精修（含印刷体姓名核对、nameless 兜底、本机姓名记忆），
    最终填表与拍照上传完全一致。 */
-var liveStream=null,liveWorker=null,liveRunning=false,liveBusy=false,liveTries=0,liveTimer=null,livePoolAcc=[];
+var liveStream=null,liveWorker=null,liveRunning=false,liveBusy=false,liveTries=0,liveTimer=null,livePoolAcc=[],liveGuideTimer=null;
 function stopLiveStream(){
   if(liveStream){try{liveStream.getTracks().forEach(function(t){t.stop()})}catch(e){}liveStream=null}
   var v=document.getElementById('liveVideo');if(v){try{v.srcObject=null}catch(e){}}
@@ -2195,6 +2195,25 @@ function fitScanOverlay(){
   ov.style.transform='none';
   ov.style.transformOrigin='';
   try{window.scrollTo(0,0)}catch(e){}
+  placeGuide();
+}
+/* 黄框跟随摄像头画面实际显示区域（object-fit:contain 上下有黑边时也精准对准 MRZ 区） */
+function placeGuide(){
+  var v=document.getElementById('liveVideo');
+  var st=document.querySelector('.scan-stage');
+  var g=document.querySelector('.live-guide');
+  if(!v||!st||!g)return;
+  var vw=v.videoWidth,vh=v.videoHeight;
+  var W=st.clientWidth,H=st.clientHeight;
+  if(!vw||!vh||!W||!H)return;
+  var r=vw/vh;
+  var dispW,dispH;
+  if(W/H>r){dispH=H;dispW=H*r}else{dispW=W;dispH=W/r}
+  var ox=(W-dispW)/2,oy=(H-dispH)/2;
+  g.style.left=(ox+dispW*0.025)+'px';
+  g.style.right=(ox+dispW*0.025)+'px';
+  g.style.top=(oy+dispH*0.80)+'px';
+  g.style.bottom=(H-(oy+dispH*0.94))+'px';
 }
 try{
   window.addEventListener('orientationchange',fitScanOverlay);
@@ -2206,6 +2225,7 @@ try{
 function stopLiveScan(userStopped){
   liveRunning=false;
   if(liveTimer){clearTimeout(liveTimer);liveTimer=null}
+  if(liveGuideTimer){clearInterval(liveGuideTimer);liveGuideTimer=null}
   stopLiveStream();
   if(liveWorker){try{liveWorker.terminate()}catch(e){}liveWorker=null}
   var w=document.getElementById('scanOverlay');if(w)w.hidden=true;
@@ -2225,9 +2245,12 @@ function startLiveScan(){
       liveStream=st;
       var v=document.getElementById('liveVideo');
       v.srcObject=st;
-      v.onloadedmetadata=function(){v.play().catch(function(){})};
+      v.onloadedmetadata=function(){v.play().catch(function(){});placeGuide()};
       document.getElementById('scanOverlay').hidden=false;
       fitScanOverlay();
+      /* 视频元数据/布局稳定前持续校准黄框位置，几秒后自动停止 */
+      liveGuideTimer=setInterval(placeGuide,400);
+      setTimeout(function(){if(liveGuideTimer){clearInterval(liveGuideTimer);liveGuideTimer=null}},6000);
       setOcr('让机读区进入黄框，识别成功会自动填入…',8);
       setLiveHint('正在启动识别引擎…');
       tessWorkerPromise('eng',1,null).then(function(w){
