@@ -19,10 +19,13 @@ self.addEventListener('fetch', (e) => {
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req, { cache: 'no-store' }).then((res) => {
-        const cp = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, cp));
+        /* 只缓存成功页面：避免断网时回退到 404/5xx 错误页 */
+        if (res && res.ok) {
+          const cp = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, cp));
+        }
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(() => caches.match(req, { ignoreSearch: true }))
     );
   }
 });
