@@ -1606,14 +1606,14 @@ function scanFlightDetail(texts){
       for(var i2=0;i2<CITIES.length;i2++){if(L.indexOf(CITIES[i2])>-1){from=CITIES[i2];return}}
     });
   }
-  // 含「航/班」字或 4 位以上字母数字的行（去空格后），未识别到航班号时用于提示诊断
+  // 全部去空格后的非空行（截断），未识别到航班号时用于提示诊断
   var flRows=[];
   lines.forEach(function(L){
-    if(/航|班/.test(L)||/[A-Za-z0-9]{4,}/.test(L)){
-      flRows.push(L.length>30?L.slice(0,30)+'…':L);
+    if(L.length>=2){
+      flRows.push(L.length>60?L.slice(0,60)+'…':L);
     }
   });
-  return {arrival:arrDate,flight:flight,from:from,flRows:flRows.slice(0,6)};
+  return {arrival:arrDate,flight:flight,from:from,flRows:flRows.slice(0,8)};
 }
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
@@ -1650,7 +1650,7 @@ function applyTravelTexts(texts){
       else warn.push('抵达日期 '+fd.arrival+' 不在可选范围');
     }
     if(fd.flight){travelSetField('f-flight',fd.flight);done.push('航班 '+fd.flight)}
-    else if(fd.arrival)warn.push('未识别到航班号（原文：'+(fd.flRows&&fd.flRows.length?fd.flRows.join(' / '):'无航班行')+'），请手动填写班次');
+    else if(fd.arrival)warn.push('未识别到航班号（引擎V'+(tessSetIdx+1)+'；原文：'+(fd.flRows&&fd.flRows.length?fd.flRows.join(' / '):'无航班行')+'），请手动填写班次');
     if(fd.from){
       var fdMap={'广州':'CHN','北京':'CHN','上海':'CHN','深圳':'CHN','成都':'CHN','杭州':'CHN','厦门':'CHN','昆明':'CHN','重庆':'CHN','西安':'CHN','天津':'CHN','武汉':'CHN','长沙':'CHN','南京':'CHN','青岛':'CHN','海口':'CHN','三亚':'CHN','福州':'CHN','郑州':'CHN','乌鲁木齐':'CHN'};
       var fdCode=fdMap[fd.from]||'CHN';
