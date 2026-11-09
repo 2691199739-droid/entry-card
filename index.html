@@ -521,7 +521,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109f</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109g</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2937,8 +2937,8 @@ function init(){
     try{isPWA=!!navigator.standalone||!!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)}catch(e){}
     var isSafari=/Safari/i.test(ua)&&!/CriOS|FxiOS|EdgiOS|MicroMessenger|Wechat|QQ\//i.test(ua);
     if(iOS&&isPWA){
-      toast('主屏幕图标版无法自动填表（此环境不运行填表脚本）：已复制带资料的跳转链接，请打开 Safari 粘贴访问');
-      copyText(url,'已复制跳转链接：请打开 Safari 粘贴访问，进入申报表单后即自动填入','复制失败，请重试');
+      toast('这是旧版主屏幕图标（独立窗口），自动填表失效：请长按删除此图标，用 Safari 打开本页重新「添加到主屏幕」一次，以后就能一键跳转自动填表');
+      copyText(url,'旧图标无法自动填表：本次可先在 Safari 粘贴打开完成办理；重新添加图标后即恢复一键跳转','复制失败，请重试');
       return;
     }
     if(iOS&&!isSafari){
