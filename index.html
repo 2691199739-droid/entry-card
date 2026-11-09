@@ -522,6 +522,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261109c</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1590,7 +1591,14 @@ function scanFlightDetail(texts){
       for(var i2=0;i2<CITIES.length;i2++){if(L.indexOf(CITIES[i2])>-1){from=CITIES[i2];return}}
     });
   }
-  return {arrival:arrDate,flight:flight,from:from};
+  // 含「航/班/航班号特征」的行（去空格后），未识别到航班号时用于提示诊断
+  var flRows=[];
+  lines.forEach(function(L){
+    if(/航|班/.test(L)||/[A-Z]{2}\d{3,4}/.test(L)||/[0-9][A-Z]\d{3,4}/.test(L)){
+      flRows.push(L.length>26?L.slice(0,26)+'…':L);
+    }
+  });
+  return {arrival:arrDate,flight:flight,from:from,flRows:flRows.slice(0,4)};
 }
 function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
@@ -1627,7 +1635,7 @@ function applyTravelTexts(texts){
       else warn.push('抵达日期 '+fd.arrival+' 不在可选范围');
     }
     if(fd.flight){travelSetField('f-flight',fd.flight);done.push('航班 '+fd.flight)}
-    else if(fd.arrival)warn.push('未识别到航班号，请手动填写班次或换更清晰的截图');
+    else if(fd.arrival)warn.push('未识别到航班号（原文：'+(fd.flRows&&fd.flRows.length?fd.flRows.join(' / '):'无航班行')+'），请手动填写班次');
     if(fd.from){
       var fdMap={'广州':'CHN','北京':'CHN','上海':'CHN','深圳':'CHN','成都':'CHN','杭州':'CHN','厦门':'CHN','昆明':'CHN','重庆':'CHN','西安':'CHN','天津':'CHN','武汉':'CHN','长沙':'CHN','南京':'CHN','青岛':'CHN','海口':'CHN','三亚':'CHN','福州':'CHN','郑州':'CHN','乌鲁木齐':'CHN'};
       var fdCode=fdMap[fd.from]||'CHN';
