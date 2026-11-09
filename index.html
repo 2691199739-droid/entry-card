@@ -2050,13 +2050,18 @@ function setLiveHint(msg){
   var h=document.getElementById('liveHint');
   if(h)h.textContent=msg;
 }
-/* 扫描界面默认不旋转（竖持正常显示，横持手机浏览器自动横屏）；
-   手机开了方向锁定又横持拍摄时，点「旋转画面」即可摆正；尺寸用可视区精确适配，避免底部露出地址栏 */
+/* 固定横版：扫描界面始终横向显示，只能横持手机使用。
+   竖屏时整体旋转 90° 变横版；横屏时自然全屏。
+   开了方向锁定导致画面方向不对时，点「旋转画面」手动摆正。
+   尺寸按可视区精确设置，确保全屏覆盖不留缝。 */
 function fitScanOverlay(){
   var ov=document.getElementById('scanOverlay');
-  if(!ov)return;
+  if(!ov||ov.hidden)return;
   var vv=window.visualViewport||window;
   var w=vv.width,h=vv.height;
+  if(ov.dataset.manual!=='1'){
+    ov.classList.toggle('scan-rot',h>w);
+  }
   if(ov.classList.contains('scan-rot')){
     ov.style.width=h+'px';
     ov.style.height=w+'px';
@@ -2075,11 +2080,8 @@ function fitScanOverlay(){
   try{window.scrollTo(0,0)}catch(e){}
 }
 try{
-  window.addEventListener('orientationchange',function(){
-    var ov=document.getElementById('scanOverlay');
-    if(ov)ov.classList.remove('scan-rot'); /* 浏览器真转方向时复位手动旋转 */
-    fitScanOverlay();
-  });
+  window.addEventListener('orientationchange',fitScanOverlay);
+  window.addEventListener('resize',fitScanOverlay);
   if(window.visualViewport){
     window.visualViewport.addEventListener('resize',fitScanOverlay);
   }
@@ -2122,6 +2124,7 @@ function startLiveScan(){
       v.srcObject=st;
       v.onloadedmetadata=function(){v.play().catch(function(){})};
       document.getElementById('scanOverlay').hidden=false;
+      delete document.getElementById('scanOverlay').dataset.manual;
       document.getElementById('scanOverlay').classList.remove('scan-rot');
       fitScanOverlay();
       lockLandscape();
@@ -2834,7 +2837,13 @@ function init(){
   $('#liveRotBtn').addEventListener('click',function(){
     var ov=document.getElementById('scanOverlay');
     if(!ov)return;
-    ov.classList.toggle('scan-rot');
+    if(ov.dataset.manual!=='1'){
+      ov.dataset.manual='1';
+      ov.classList.toggle('scan-rot');
+    }else{
+      ov.dataset.manual='0';
+      ov.classList.toggle('scan-rot');
+    }
     fitScanOverlay();
   });
   $('#travelFile').addEventListener('change',function(){
