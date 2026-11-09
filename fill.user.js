@@ -21,9 +21,9 @@ function bmMy(d,maxTries){
   var MT=maxTries||30;
   var banner=null;
   function note(m,s){
-    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';document.body.appendChild(banner)}
+    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';banner.title='点击关闭';try{banner.addEventListener('click',function(){try{banner.remove()}catch(e){};banner=null})}catch(e){};document.body.appendChild(banner)}
     banner.textContent=m;clearTimeout(banner._t);
-    if(!s)banner._t=setTimeout(function(){banner.remove();banner=null},8000);
+    if(!s)banner._t=setTimeout(function(){if(banner){try{banner.remove()}catch(e){}}banner=null},8000);
   }
   function g(i){return document.getElementById(i)}
   function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;if(e.type==='date'&&!e.value)e.value=String(v).split('/').reverse().join('-');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return String(e.value)===String(v)?1:0}
@@ -247,9 +247,9 @@ function bmMy(d,maxTries){
 function bmTh(d){
   var banner=null;
   function note(m,s){
-    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';document.body.appendChild(banner)}
+    if(!banner){banner=document.createElement('div');banner.style.cssText='position:fixed;left:14px;bottom:14px;z-index:2147483647;background:#0B2447;color:#fff;font:13px/1.6 system-ui,-apple-system,sans-serif;padding:12px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.35);max-width:360px';banner.title='点击关闭';try{banner.addEventListener('click',function(){try{banner.remove()}catch(e){};banner=null})}catch(e){};document.body.appendChild(banner)}
     banner.textContent=m;clearTimeout(banner._t);
-    if(!s)banner._t=setTimeout(function(){banner.remove();banner=null},8000);
+    if(!s)banner._t=setTimeout(function(){if(banner){try{banner.remove()}catch(e){}}banner=null},8000);
   }
   function fmt(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
   function fcAny(names){
@@ -434,7 +434,9 @@ function bmTh(d){
         if(raw){
           d=dec(raw);
           if(d&&d.passport){
-            try{sessionStorage.setItem('mdac_fill',raw)}catch(e){}
+            /* 存码带时间戳：30 分钟内（同标签页 REGISTER 整页跳转 / 刷新重试）有效，
+               过期自动忽略，避免隔天旧资料被再次自动填入 */
+            try{sessionStorage.setItem('mdac_fill',JSON.stringify({t:Date.now(),raw:raw}))}catch(e){}
             /* 隐私：填表码含个人资料，解析成功后立即从地址栏移除，避免留在浏览器历史记录 */
             try{
               if(location.hash&&location.hash.indexOf('mdacfill')>-1){
@@ -448,7 +450,11 @@ function bmTh(d){
     if(!d||!d.passport){
       try{
         var sv=sessionStorage.getItem('mdac_fill');
-        if(sv){d=dec(sv)}
+        if(sv){
+          var raw2=sv,ts=0;
+          try{var o=JSON.parse(sv);if(o&&o.raw){raw2=o.raw;ts=o.t||0}}catch(e){}
+          if(ts&&Date.now()-ts<30*60*1000){d=dec(raw2)}
+        }
       }catch(e){}
     }
     return (d&&d.passport)?d:null;
@@ -476,12 +482,18 @@ function bmTh(d){
   window.__entryFillLoaded=1;
 })();
 (function(){
-  /* 一键跳转自动填表：链接带 #mdacfill= 码（或本会话已存码）→ 不弹窗、直接等待表单并填入 */
+  /* 一键跳转自动填表：链接带 #mdacfill= 码（或本会话 30 分钟内已存码）→ 不弹窗、直接等待表单并填入 */
   function autoRun(){
     try{
       var hm=location.hash.match(/mdacfill=([^&#]*)/);
       var sv=null;
       try{sv=sessionStorage.getItem('mdac_fill')}catch(e){}
+      /* 会话码带时间戳：超 30 分钟视为旧资料，不自动填，避免隔天误填旧数据 */
+      if(sv){
+        var ok=false;
+        try{var o=JSON.parse(sv);if(o&&o.raw&&o.t&&Date.now()-o.t<30*60*1000)ok=true}catch(e){}
+        if(!ok)sv=null;
+      }
       if(hm||sv){window.__entryFill&&window.__entryFill(true)}
     }catch(e){}
   }
