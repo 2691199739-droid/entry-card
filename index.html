@@ -1387,7 +1387,8 @@ function handleTravelFiles(files){
           }).then(function(img){
             if(!img)return '';
             var w0=img.naturalWidth||img.width,h0=img.naturalHeight||img.height;
-            var sc=Math.max(1,Math.min(2.2,1600/w0));
+            // 行程截图统一放大到至少 1600 宽（不足则放大，过大则缩小），避免小字被 OCR 吞掉
+            var sc=Math.min(2.2,Math.max(1,1600/w0));
             var c=document.createElement('canvas');
             c.width=Math.round(w0*sc);c.height=Math.round(h0*sc);
             var ctx=c.getContext('2d');
