@@ -218,6 +218,10 @@ body.dest-th [data-f="passportExp"]{display:none}
 .scan-entry .scan-btn{width:100%;max-width:420px;display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:800;font-size:17px;padding:15px 18px}
 .scan-entry-tip{font-size:12.5px;color:var(--mut);margin-top:10px;line-height:1.7}
 .scan-overlay{position:fixed;inset:0;z-index:2000;background:#000;display:flex;flex-direction:column}
+/* 固定横版：竖屏打开时整体旋转 90° 横向显示（方向锁定也有效）；
+   若画面方向与手机不一致，扫描界面上有「旋转画面」按钮一键摆正 */
+.scan-overlay.scan-rot{left:100%;top:0;width:100vh;height:100vw;transform:rotate(90deg);transform-origin:0 0}
+.scan-overlay.scan-rot .live-guide{left:72%;right:4%;top:18%;bottom:18%}
 .scan-overlay[hidden]{display:none}
 .scan-top{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(10,31,68,.96);color:#fff;z-index:2}
 .scan-exit{flex:0 0 auto;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer}
@@ -421,6 +425,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
       <div class="scan-top">
         <button type="button" class="scan-exit" id="liveStopBtn">退出扫描</button>
         <span class="scan-title">请横持手机 · 机读区对准黄框</span>
+        <button type="button" class="scan-exit" id="liveRotBtn">旋转画面</button>
       </div>
       <div class="scan-stage">
         <video id="liveVideo" autoplay playsinline muted></video>
@@ -2047,6 +2052,16 @@ function setLiveHint(msg){
   var h=document.getElementById('liveHint');
   if(h)h.textContent=msg;
 }
+/* 横版显示：按手机方向自动旋转扫描界面；用户点「旋转画面」则手动切换（手动期间不自动同步） */
+function syncScanRot(){
+  var ov=document.getElementById('scanOverlay');
+  if(!ov||ov.hidden||ov.dataset.manual==='1')return;
+  ov.classList.toggle('scan-rot',window.innerHeight>window.innerWidth);
+}
+try{
+  window.addEventListener('orientationchange',syncScanRot);
+  window.addEventListener('resize',syncScanRot);
+}catch(e){}
 /* 进入扫描时尝试锁定横屏（PWA 安装版 / 支持的全屏场景生效；网页普通浏览时部分浏览器不支持，则靠提示让用户横持） */
 function lockLandscape(){
   try{
@@ -2085,6 +2100,8 @@ function startLiveScan(){
       v.srcObject=st;
       v.onloadedmetadata=function(){v.play().catch(function(){})};
       document.getElementById('scanOverlay').hidden=false;
+      delete document.getElementById('scanOverlay').dataset.manual;
+      syncScanRot();
       lockLandscape();
       setOcr('横持手机，让机读区进入黄框，识别成功会自动填入…',8);
       setLiveHint('正在启动识别引擎…');
@@ -2792,6 +2809,18 @@ function init(){
   $('#confirmOK').addEventListener('change',function(){$('#confirmLine').classList.remove('errtext')});
   $('#liveScanBtn').addEventListener('click',startLiveScan);
   $('#liveStopBtn').addEventListener('click',function(){stopLiveScan(true)});
+  $('#liveRotBtn').addEventListener('click',function(){
+    var ov=document.getElementById('scanOverlay');
+    if(!ov)return;
+    if(ov.dataset.manual==='1'){
+      ov.dataset.manual='0';
+      ov.classList.remove('scan-rot');
+      syncScanRot();
+    }else{
+      ov.dataset.manual='1';
+      ov.classList.toggle('scan-rot');
+    }
+  });
   $('#travelFile').addEventListener('change',function(){
     if(this.files&&this.files.length)handleTravelFiles(this.files);
     this.value='';
