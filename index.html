@@ -1763,6 +1763,65 @@ function applyTravelTexts(texts){
     var m=squash(t).match(/(\d{1,2})[月H冃目](\d{1,2})[日H口曰0O]/);
     return m?mdacDate(+m[1],+m[2]):null;
   }
+  function thDigitsDate(t){
+    // 泰国：机票日期「月/日」字被 OCR 整个吃掉时的数字串恢复。
+    // 例：「6月22日」→「68220」（月→8、日→0）：先按不跳字拆分（6/8），
+    // 剩余数字 ≥2 位时允许跳过 1 位再拆（6 skip8 22 → 6/22）。
+    // 仅处理含城市对或「周」字的行；先剔除航班号（CZ357 等）避免干扰；
+    // 拆分结果有歧义（多个方案同样合理）时放弃，交给用户手动填写。
+    var best=null;
+    String(t||'').split(/\n+/).forEach(function(L){
+      var sq=squash(L).replace(/[A-Z]{2}\d{3,4}/g,'').replace(/[0-9][A-Z]\d{3,4}/g,'');
+      var m1=sq.match(/(?:20\d{2})?(\d{3,6})周/);
+      var pair=/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/.test(sq);
+      if(!m1&&!pair)return;
+      var seqs=sq.match(/\d{3,6}/g)||[];
+      var seq=m1?m1[1]:null;
+      if(!seq){if(seqs.length!==1)return;seq=seqs[0]}
+      if(!seq)return;
+      // 剔除行首年份前缀（20xx）：「2026年6月22日」损坏为「202668220」时先去掉 2026
+      seq=seq.replace(/^20\d{2}/,'');
+      if(seq.length<3)return;
+      function bestSplit(s,allowSkip){
+        var res=null,ambiguous=false;
+        for(var mLen=1;mLen<=2;mLen++){
+          var mm=+s.slice(0,mLen);
+          if(mm<1||mm>12)continue;
+          var rest=s.slice(mLen);
+          for(var dLen=1;dLen<=2&&dLen<=rest.length;dLen++){
+            var dd=+rest.slice(0,dLen);
+            if(dd<1||dd>31)continue;
+            var used=mLen+dLen;
+            if(!res||used>res.used){res={m:mm,d:dd,used:used};ambiguous=false}
+            else if(used===res.used&&(mm!==res.m||dd!==res.d))ambiguous=true;
+          }
+          if(allowSkip&&rest.length>=1){
+            var rest2=rest.slice(1);
+            for(var dLen2=1;dLen2<=2&&dLen2<=rest2.length;dLen2++){
+              var dd2=+rest2.slice(0,dLen2);
+              if(dd2<1||dd2>31)continue;
+              var used2=mLen+1+dLen2;
+              if(!res||used2>res.used){res={m:mm,d:dd2,used:used2};ambiguous=false}
+              else if(used2===res.used&&(mm!==res.m||dd2!==res.d))ambiguous=true;
+            }
+          }
+        }
+        return {res:res,ambiguous:ambiguous};
+      }
+      var r0=bestSplit(seq,false);
+      if(!r0.res)return;
+      var cand=r0.ambiguous?null:r0.res;
+      // 不跳字方案有歧义或剩余数字较多时，尝试跳 1 位（「月」字被 OCR 认成数字的常见损坏）
+      if(seq.length-r0.res.used>=2){
+        var r1=bestSplit(seq,true);
+        if(r1.res&&!r1.ambiguous&&(!cand||r1.res.used>cand.used))cand=r1.res;
+      }
+      if(!cand)return;
+      if(!best||cand.used>best.used)best=cand;
+    });
+    if(!best)return null;
+    return mdacDate(best.m,best.d);
+  }
   if(inbound){
     var sq=squash(inbound);
     var d=firstDate(inbound);
@@ -1770,6 +1829,8 @@ function applyTravelTexts(texts){
     if(!d){
       texts.forEach(function(t){if(d)return;if(t===inbound||t===ret||t===hotel)return;var dd=firstDate(t);if(dd)d=dd;});
     }
+    // 泰国：日期「月/日」字被 OCR 整个吃掉时，用数字串启发式恢复（如「6月22日」→「68220」）
+    if(!d&&DEST==='TH'){d=thDigitsDate(inbound)}
     if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
     if(inbOrg){
       var trn=squash(inbound).match(/中转([\u4e00-\u9fa5]{2,6})/);
@@ -1801,6 +1862,7 @@ function applyTravelTexts(texts){
   }
   if(ret){
     var rd=firstDate(ret);
+    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
     if(DEST==='TH'){
       // 泰国离境航班从返程机票截图识别（不自动生成）
