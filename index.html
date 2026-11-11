@@ -808,6 +808,8 @@ function applyDestUI(){
   if(tzT)tzT.textContent=th?'上传机票与酒店截图，自动识别行程':'上传去程机票截图，自动识别行程';
   if(tzS)tzS.textContent=th?'上传去程机票、返程机票、酒店订单截图 · 抵达/离境日期、航班号、出发国、酒店与府县均从截图识别，不会自动生成示例 · Click or drag screenshots':'只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots';
   setLabel('f-state',th?'府 / 省<span class="en">Province</span><span class="req">*</span>':'州属<span class="en">State</span><span class="req">*</span>');
+  setLabel('f-departure',th?'离境日期（返程）<span class="en">Date of Departure</span><span class="req">*</span>':'离境日期<span class="en">Date of Departure</span><span class="req">*</span>');
+  setLabel('f-deptflight',th?'返程航班<span class="en">Departure Flight No.</span><span class="req">*</span>':'离境航班<span class="en">Departure Flight No.</span><span class="req">*</span>');
   setLabel('f-city',th?'城市 / 县<span class="en">City / District</span><span class="req">*</span>':'城市<span class="en">City</span><span class="req">*</span>');
   setLabel('f-address',th?'住宿地址（酒店名 + 街道）<span class="en">Address in Thailand</span><span class="req">*</span>':'地址第一行<span class="en">Address Line 1</span><span class="req">*</span>');
   setLabel('f-accom',th?'住宿类型<span class="en">Type of Accommodation</span><span class="req">*</span>':'住宿类型<span class="en">Accommodation of Stay</span><span class="req">*</span>');
@@ -818,6 +820,8 @@ function applyDestUI(){
   ph['f-postcode']=th?'泰国邮编 5 位数字，如 10110':'5 位数字，如 41000';
   for(var id in ph){var e2=document.getElementById(id);if(e2)e2.setAttribute('placeholder',ph[id])}
   LABELS.state[0]=th?'府 / 省 Province':'州属 State';
+  LABELS.departure[0]=th?'离境日期（返程） Date of Departure':'离境日期 Date of Departure';
+  LABELS.deptflight[0]=th?'返程航班 Departure Flight':'离境航班 Departure Flight';
   LABELS.city[0]=th?'城市 / 县 City/District':'城市 City';
   LABELS.address[0]=th?'住宿地址 Address':'地址第一行 Address 1';
   LABELS.address[1]=th?'Address in Thailand':'Address Line 1 (In Malaysia)';
@@ -1811,6 +1815,26 @@ function applyTravelTexts(texts){
     });
     return res;
   }
+  function thWeekFix(sq,iso){
+    // 泰国：OCR 把「9月18日」读成「9月8日」时，用票面「周X」反推恢复十位。
+    // 例：「9月8日 周五」→ 8号是周二 → 试 18 号是周五 → 恢复 2026-09-18。
+    // 仅当票面星期与识别日期的星期一致时才修正，不一致保持原值（宁可留错值提示，不猜错）。
+    var wm=squash(sq).match(/周([一二三四五六日天])/);
+    if(!wm||!iso)return iso;
+    var wk={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
+    var want=wk[wm[1]];
+    if(want===undefined)return iso;
+    var p=iso.split('-'),y=+p[0],m=+p[1],d=+p[2];
+    if(!y||!m||!d)return iso;
+    var dim=new Date(y,m,0).getDate();
+    var best=null;
+    [d,d+10,d+20].forEach(function(x){
+      if(x<=dim&&new Date(y,m-1,x).getDay()===want)best=x;
+    });
+    if(best===null||best===d)return iso;
+    var mm=(m<10?'0'+m:m),dd=(best<10?'0'+best:best);
+    return y+'-'+mm+'-'+dd;
+  }
   function thDigitsDate(t){
     // 泰国：机票日期「月/日」字被 OCR 整个吃掉时的数字串恢复。
     // 例：「6月22日」→「68220」（月→8、日→0）：先按不跳字拆分（6/8），
@@ -1938,16 +1962,17 @@ function applyTravelTexts(texts){
   if(ret){
     var rd=(sameRet?(lastDate(ret)||lastEnDate(ret)):null)||firstDate(ret)||enDate(ret);
     if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)}
-    if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
+    if(rd&&DEST==='TH'){rd=thWeekFix(ret,rd)}
+    if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境日期(返程) '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
     else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期')}
     if(DEST==='TH'){
       // 泰国离境航班从返程机票截图识别（不自动生成）
       var rcs=flightCands(squash(ret));
       if(rcs&&rcs.length){
         var rfn=rcs[sameRet?rcs.length-1:0];
-        if(travelSetField('f-deptflight',rfn))done.push('离境航班 '+rfn);
+        if(travelSetField('f-deptflight',rfn))done.push('返程航班 '+rfn);
       }else{
-        warn.push('未识别到离境航班号，请手动填写');
+        warn.push('未识别到返程航班号，请手动填写');
       }
     }
   }
@@ -2021,7 +2046,7 @@ function applyTravelTexts(texts){
   var today=new Date().toISOString().slice(0,10);
   var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
   if(av&&av<today)warn.push('识别到的抵达日期 '+av+' 已过去，请点开日期修改');
-  if(dv&&dv<today)warn.push('识别到的离境日期 '+dv+' 已过去，请点开日期修改');
+  if(dv&&dv<today)warn.push('识别到的离境日期(返程) '+dv+' 已过去，请点开日期修改');
   // 泰国：离境日期合理性提醒（OCR 数字错读时能及早发现，如「18」认成「8」）
   if(DEST==='TH'&&av&&dv){
     var gapMs=new Date(dv+'T00:00:00')-new Date(av+'T00:00:00');
