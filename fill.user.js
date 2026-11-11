@@ -383,10 +383,11 @@ function bmTh(d){
     steps.push(function(cb){datePick(['deptDate'],fmt(d.departure),function(x){ok(x,'deptDate');cb()})});
     steps.push(function(cb){optRow('traModeId',d.mode?String(d.mode).toUpperCase():'AIR',function(x){ok(x,'traMode(出行方式)');cb()})});
     steps.push(function(cb){optRow('deptTraModeId',d.mode?String(d.mode).toUpperCase():'AIR',function(x){ok(x,'deptTraMode(离境方式)');cb()})});
-    if(d.purpose)steps.push(function(cb){sel('traPurposeId',[d.purpose],function(x){ok(x,'traPurpose(旅行目的)');cb()})});
+    if(d.purpose)steps.push(function(cb){var PK={'TOURISM':['TOURISM','HOLIDAY'],'BUSINESS':['BUSINESS','WORK'],'TRANSIT':['TRANSIT','TRANSFER'],'STUDY':['STUDY','EDUCATION'],'WORKING':['WORK','EMPLOYMENT'],'VISITING FRIENDS AND RELATIVES':['VISIT','FAMILY'],'OTHERS':['OTHER','SPECIFY']};sel('traPurposeId',PK[d.purpose]||[d.purpose],function(x){ok(x,'traPurpose(旅行目的)');cb()})});
     if(d.lastPortName)steps.push(function(cb){ana(['countryBoardDesc'],[String(d.lastPortName).toUpperCase()],function(x){ok(x,'countryBoard(出发国家)');cb()})});
     steps.push(function(cb){stepperNext(cb)});
-    var accKw=d.accommodation==='02'?['FRIEND','RELATIVE']:(d.accommodation==='99'?['OTHER']:['HOTEL']);
+    var acv=String(d.accommodation||'').toUpperCase();
+    var accKw=(acv==='02'||acv.indexOf('FRIEND')>-1||acv.indexOf('RELATIVE')>-1)?['FRIEND','RELATIVE']:((acv==='99'||acv.indexOf('OTHER')>-1)?['OTHER']:['HOTEL']);
     steps.push(function(cb){sel('accTypeId',accKw,function(x){ok(x,'accType(住宿类型)');cb()})});
     if(d.state)steps.push(function(cb){ana(['accProvinceDesc'],[d.state],function(x){ok(x,'accProvince(府)');cb()})});
     if(d.city)steps.push(function(cb){ana(['accDistrictDesc','accDistrict'],[d.city],function(x){ok(x,'accDistrict(县/区)');cb()})});
