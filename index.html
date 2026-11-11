@@ -752,9 +752,9 @@ function pickThaiPlace(sq){
   return null;
 }
 function pickThaiRet(sq){
-  // 泰国返程票城市对判定：出发城市为泰国城市（曼谷/普吉/清迈等 → 中国城市）
+  // 泰国返程票城市对判定：出发城市为泰国城市/机场（曼谷/素万那普/廊曼/普吉/清迈等 → 中国城市）
   if(!sq)return false;
-  var thCity=['曼谷','普吉','清迈','清莱','芭提雅','芭堤雅','华欣','苏梅','甲米','合艾','素叻','PATTAYA','BANGKOK','PHUKET','CHIANG MAI','CHIANG RAI','KRABI','SAMUI','HUA HIN','HAT YAI'];
+  var thCity=['曼谷','普吉','清迈','清莱','芭提雅','芭堤雅','华欣','苏梅','甲米','合艾','素叻','素万那普','廊曼','乌塔堡','素叻他尼','PATTAYA','BANGKOK','PHUKET','CHIANG MAI','CHIANG RAI','KRABI','SAMUI','HUA HIN','HAT YAI','SUVARNABHUMI','DON MUEANG','UTAPAO'];
   for(var i=0;i<thCity.length;i++){if(sq.indexOf(thCity[i])>-1)return true}
   return false;
 }
@@ -1725,12 +1725,12 @@ function applyTravelTexts(texts){
       if(DEST==='TH'&&!ret&&pickThaiRet(mm[1])){ret=t}
     }
     // 英文票面城市对（Beijing - Bangkok / Bangkok - Beijing）
-    var ems=sq.match(/[A-Z][A-Za-z .']{1,18}[-–—→][A-Z][A-Za-z .']{1,18}/g)||[];
+    var ems=sq.match(/[A-Z][A-Za-z .']{1,26}[-–—→][A-Z][A-Za-z .']{1,26}/g)||[];
     for(var k=0;k<ems.length;k++){
-      var em=ems[k].match(/^([A-Z][A-Za-z .']{1,18})[-–—→]([A-Z][A-Za-z .']{1,18})$/);
+      var em=ems[k].match(/^([A-Z][A-Za-z .']{1,26})[-–—→]([A-Z][A-Za-z .']{1,26})$/);
       if(!em)continue;
       var eL=em[1].toUpperCase(),eR=em[2].toUpperCase();
-      var eThai=/BANGKOK|PHUKET|CHIANG|KRABI|SAMUI|PATTAYA|HUA\s?HIN|HAT\s?YAI/;
+      var eThai=/BANGKOK|PHUKET|CHIANG|KRABI|SAMUI|PATTAYA|HUA\s?HIN|HAT\s?YAI|SUVARNABHUMI|DON\s?MUEANG|UTAPAO/;
       // 马来西亚：保持原判定（第一个城市对命中即 break）
       if(!inbound&&eR.indexOf('KUALA')>-1){inbound=t;inbOrg=em[1];break}
       if(!ret&&eL.indexOf('KUALA')>-1){ret=t;break}
