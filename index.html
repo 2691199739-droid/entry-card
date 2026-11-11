@@ -1700,7 +1700,7 @@ function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
   var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
-  function flightCands(s){var t=(s||'').replace(/\d{1,2}:\d{2}/g,'');return (t.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(t.match(/[0-9][A-Z]\d{3,4}/g)||[])}
+  function flightCands(s){var t=(s||'').replace(/\d{1,2}:\d{2}/g,'').replace(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d*/gi,'');return (t.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(t.match(/[0-9][A-Z]\d{3,4}/g)||[])}
   function squash(t){return t.replace(/[ \t]/g,'')}
   function cleanCity(s){
     var t=s;
@@ -1717,10 +1717,12 @@ function applyTravelTexts(texts){
     for(var k=0;k<ms.length;k++){
       var mm=ms[k].match(/^([\u4e00-\u9fa5]{2,8})[-–—→]([\u4e00-\u9fa5]{2,8})$/);
       if(!mm)continue;
+      // 马来西亚：保持原判定（第一个城市对命中即 break）
       if(mm[2].indexOf('吉隆')>-1){if(!inbound){inbound=t;inbOrg=cleanCity(mm[1])}break}
-      if(DEST==='TH'&&!inbound&&pickThaiRet(mm[2])){inbound=t;inbOrg=cleanCity(mm[1]);break}
       if(mm[1].indexOf('吉隆')>-1){if(!ret)ret=t;break}
-      if(DEST==='TH'&&!ret&&pickThaiRet(mm[1])){ret=t;break}
+      // 泰国：同一段文本可能含去程+返程两对城市（订单列表页），全部扫描不 break
+      if(DEST==='TH'&&!inbound&&pickThaiRet(mm[2])){inbound=t;inbOrg=cleanCity(mm[1])}
+      if(DEST==='TH'&&!ret&&pickThaiRet(mm[1])){ret=t}
     }
     // 英文票面城市对（Beijing - Bangkok / Bangkok - Beijing）
     var ems=sq.match(/[A-Z][A-Za-z .']{1,18}[-–—→][A-Z][A-Za-z .']{1,18}/g)||[];
@@ -1729,8 +1731,12 @@ function applyTravelTexts(texts){
       if(!em)continue;
       var eL=em[1].toUpperCase(),eR=em[2].toUpperCase();
       var eThai=/BANGKOK|PHUKET|CHIANG|KRABI|SAMUI|PATTAYA|HUA\s?HIN|HAT\s?YAI/;
-      if(!inbound&&(eR.indexOf('KUALA')>-1||(DEST==='TH'&&eThai.test(eR)))){inbound=t;inbOrg=em[1];break}
-      if(!ret&&(eL.indexOf('KUALA')>-1||(DEST==='TH'&&eThai.test(eL)))){ret=t;break}
+      // 马来西亚：保持原判定（第一个城市对命中即 break）
+      if(!inbound&&eR.indexOf('KUALA')>-1){inbound=t;inbOrg=em[1];break}
+      if(!ret&&eL.indexOf('KUALA')>-1){ret=t;break}
+      // 泰国：同一段文本可能含去程+返程两对城市，全部扫描不 break
+      if(DEST==='TH'&&!inbound&&eThai.test(eR)){inbound=t;inbOrg=em[1]}
+      if(DEST==='TH'&&!ret&&eThai.test(eL)){ret=t}
     }
   });
   // 携程 App 航班详情页兜底：先于订单页第二遍兜底执行（否则整段文本会被误当作订单行），
@@ -1788,6 +1794,22 @@ function applyTravelTexts(texts){
     if(dd<1||dd>31)return null;
     if(!y)y=new Date().getFullYear();
     return y+'-'+(mo<10?'0'+mo:mo)+'-'+(dd<10?'0'+dd:dd);
+  }
+  function lastDate(t){
+    var res=null;
+    String(t||'').split(/\n+/).forEach(function(L){
+      var m=squash(L).match(/(\d{1,2})[月H冃目](\d{1,2})[日H口曰0O]/);
+      if(m)res=mdacDate(+m[1],+m[2]);
+    });
+    return res;
+  }
+  function lastEnDate(t){
+    var res=null;
+    String(t||'').split(/\n+/).forEach(function(L){
+      var d=enDate(L);
+      if(d)res=d;
+    });
+    return res;
   }
   function thDigitsDate(t){
     // 泰国：机票日期「月/日」字被 OCR 整个吃掉时的数字串恢复。
@@ -1873,6 +1895,7 @@ function applyTravelTexts(texts){
       ret=t;
     });
   }
+  var sameRet=(ret===inbound);   // 同一段文本含去程+返程（订单列表页）：日期/航班按先后顺序区分
   if(inbound){
     var sq=squash(inbound);
     var d=firstDate(inbound)||enDate(inbound);
@@ -1894,7 +1917,7 @@ function applyTravelTexts(texts){
     var kidx=sq.indexOf('KUL');
     var seg=(kidx>-1?sq.slice(0,kidx):sq).split('\n').filter(function(L){return L.indexOf('承运')<0}).join('\n');
     var codes=flightCands(seg);
-    var fn=codes?codes[codes.length-1]:null;
+    var fn=codes?codes[sameRet?0:codes.length-1]:null;
     if(!fn){var all2=flightCands(sq);if(all2.length)fn=all2[all2.length-1]}
     if(!fn){
       // 中转/多段订单：航班号分散在相邻行（inbound 行往往只有「日期 + 城市对」），
@@ -1913,7 +1936,7 @@ function applyTravelTexts(texts){
     if(travelSetField('f-mode','Air'))done.push('出行方式 Air');
   }
   if(ret){
-    var rd=firstDate(ret)||enDate(ret);
+    var rd=(sameRet?(lastDate(ret)||lastEnDate(ret)):null)||firstDate(ret)||enDate(ret);
     if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
     else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期')}
@@ -1921,7 +1944,7 @@ function applyTravelTexts(texts){
       // 泰国离境航班从返程机票截图识别（不自动生成）
       var rcs=flightCands(squash(ret));
       if(rcs&&rcs.length){
-        var rfn=rcs[0];
+        var rfn=rcs[sameRet?rcs.length-1:0];
         if(travelSetField('f-deptflight',rfn))done.push('离境航班 '+rfn);
       }else{
         warn.push('未识别到离境航班号，请手动填写');
