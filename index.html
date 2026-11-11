@@ -1835,6 +1835,31 @@ function applyTravelTexts(texts){
     var mm=(m<10?'0'+m:m),dd=(best<10?'0'+best:best);
     return y+'-'+mm+'-'+dd;
   }
+  function thLooseDate(t){
+    // 泰国最后手段：日期行「月」「日」字被 OCR 读坏时，从含城市对且含「周」的行
+    // 直接取数字作为 月/日（如「98」→9月8日，再经 thWeekFix 周X反推修正十位）。
+    // 数字 2 位直接拆；3 位尝试 (1,2)/(2,1) 两种拆法，均有效即歧义放弃；≥4 位放弃。
+    var res=null;
+    String(t||'').split(/\n+/).forEach(function(L){
+      var sq=squash(L);
+      if(!/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/.test(sq))return;
+      if(!/周/.test(sq))return;
+      sq=sq.replace(/20\d{2}/g,'').replace(/[A-Z]{2}\d{3,4}/g,'').replace(/\d{1,2}:\d{2}/g,'').replace(/\d{4,}/g,'');
+      var digits=(sq.match(/\d+/g)||[]).join('').split('');
+      if(digits.length===2){
+        var m2=+digits[0],d2=+digits[1];
+        if(m2>=1&&m2<=12&&d2>=1&&d2<=31){var iso2=mdacDate(m2,d2);if(iso2)res=iso2}
+      }else if(digits.length===3){
+        var ok=[];
+        [[digits[0],digits[1]+digits[2]],[digits[0]+digits[1],digits[2]]].forEach(function(p){
+          var mm=+p[0],dd=+p[1];
+          if(mm>=1&&mm<=12&&dd>=1&&dd<=31)ok.push([mm,dd]);
+        });
+        if(ok.length===1){var iso3=mdacDate(ok[0][0],ok[0][1]);if(iso3)res=iso3}
+      }
+    });
+    return res;
+  }
   function thDigitsDate(t){
     // 泰国：机票日期「月/日」字被 OCR 整个吃掉时的数字串恢复。
     // 例：「6月22日」→「68220」（月→8、日→0）：先按不跳字拆分（6/8），
@@ -1961,10 +1986,10 @@ function applyTravelTexts(texts){
   }
   if(ret){
     var rd=(sameRet?(lastDate(ret)||lastEnDate(ret)):null)||firstDate(ret)||enDate(ret);
-    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)}
+    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thLooseDate(ret)}
     if(rd&&DEST==='TH'){rd=thWeekFix(ret,rd)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境日期(返程) '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
-    else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期')}
+    else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期（原文：'+squash(ret).slice(0,34)+'）')}
     if(DEST==='TH'){
       // 泰国离境航班从返程机票截图识别（不自动生成）
       var rcs=flightCands(squash(ret));
