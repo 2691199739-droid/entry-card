@@ -1700,7 +1700,7 @@ function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
   var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
-  function flightCands(s){return (s.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(s.match(/[0-9][A-Z]\d{3,4}/g)||[])}
+  function flightCands(s){var t=(s||'').replace(/\d{1,2}:\d{2}/g,'');return (t.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(t.match(/[0-9][A-Z]\d{3,4}/g)||[])}
   function squash(t){return t.replace(/[ \t]/g,'')}
   function cleanCity(s){
     var t=s;
@@ -1750,7 +1750,7 @@ function applyTravelTexts(texts){
         var sq=squash(t);
         if((!/[A-Z]{2}\d{3,4}/.test(sq)&&!/[0-9][A-Z]\d{3,4}/.test(sq))||!/月[\s\S]*日/.test(sq))return;
         if(!inbound){inbound=t}
-        else if(!ret){ret=t}
+        else if(!ret&&DEST!=='TH'){ret=t}   // 泰国返程不在此兜底（避免中转段误判），由下方专项兜底识别
       });
     }
   }
@@ -1822,6 +1822,31 @@ function applyTravelTexts(texts){
     if(!best)return null;
     return mdacDate(best.m,best.d);
   }
+  // 泰国返程票兜底：城市对判定失败但文本段含航班号+可解析日期时，仍识别为返程票
+  if(DEST==='TH'&&!ret){
+    texts.forEach(function(t){
+      if(ret)return;
+      if(t===inbound||t===hotel)return;
+      var sq2=squash(t);
+      var hasFl=/[A-Z]{2}\d{3,4}/.test(sq2)||/[0-9][A-Z]\d{3,4}/.test(sq2);
+      if(!hasFl)return;
+      var rdd=firstDate(t);
+      if(!rdd)rdd=thDigitsDate(t);
+      if(!rdd)return;
+      var ok=null,hasPair=false;
+      var ms2=sq2.match(/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/g)||[];
+      for(var k2=0;k2<ms2.length;k2++){
+        var mm2=ms2[k2].match(/^([\u4e00-\u9fa5]{2,8})[-–—]([\u4e00-\u9fa5]{2,8})$/);
+        if(!mm2)continue;
+        hasPair=true;
+        if(pickThaiRet(mm2[2])){ok=false;break}   // 到达侧是泰国城市 → 去程方向，跳过
+        if(pickThaiRet(mm2[1]))ok=true;            // 出发侧是泰国城市 → 返程方向
+      }
+      if(ok===false)return;
+      if(hasPair&&ok!==true)return;                // 方向不明确的中转段不兜底
+      ret=t;
+    });
+  }
   if(inbound){
     var sq=squash(inbound);
     var d=firstDate(inbound);
@@ -1874,6 +1899,10 @@ function applyTravelTexts(texts){
         warn.push('未识别到离境航班号，请手动填写');
       }
     }
+  }
+  else if(DEST==='TH'){
+    // 泰国：离境日期与航班必须来自返程机票截图，未识别到时明确引导补传
+    warn.push('未识别到返程机票，请上传返程机票截图以自动填写离境日期与航班');
   }
   if(hotel){
     var lines=hotel.split(/\n/),name='',street='',streetCands=[],pc='';
