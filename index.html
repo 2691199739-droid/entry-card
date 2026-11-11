@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111c</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111d</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1835,6 +1835,28 @@ function applyTravelTexts(texts){
     var mm=(m<10?'0'+m:m),dd=(best<10?'0'+best:best);
     return y+'-'+mm+'-'+dd;
   }
+  function thFuzzyDate(t){
+    // 泰国：OCR 把日期数字读成形似字母（手机端「9月8日」常被读成「9月s日」）。
+    // 把月/日位的模糊字符映射回数字（s/S→8, o/O→0, g/q→9, b→6, z→2），
+    // 得到的日期再经 thWeekFix 用票面「周X」校验纠偏，纠不动就保留并提示核对。
+    var MAP={'s':8,'S':8,'o':0,'O':0,'g':9,'G':9,'q':9,'b':6,'B':8,'z':2,'Z':2};
+    var res=null;
+    String(t||'').split(/\n+/).forEach(function(L){
+      var sq=squash(L);
+      var m=sq.match(/(\d{1,2})[月H冃目]([0-9sSbBoOgGqQzZ])[日H口曰0O]/);
+      if(!m)return;
+      var mm=+m[1];
+      if(mm<1||mm>12)return;
+      var dc=m[2],dd;
+      if(/^\d$/.test(dc))dd=+dc;
+      else if(MAP[dc]!==undefined)dd=MAP[dc];
+      else return;
+      if(dd<0||dd>31)return;
+      var iso=mdacDate(mm,dd);
+      if(iso)res=iso;
+    });
+    return res;
+  }
   function thLooseDate(t){
     // 泰国最后手段：日期行「月」「日」字被 OCR 读坏时，从含城市对的行
     // 直接取数字作为 月/日（如「98」→9月8日，再经 thWeekFix 周X反推修正十位）。
@@ -1994,7 +2016,7 @@ function applyTravelTexts(texts){
   }
   if(ret){
     var rd=(sameRet?(lastDate(ret)||lastEnDate(ret)):null)||firstDate(ret)||enDate(ret);
-    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thLooseDate(ret)}
+    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thLooseDate(ret)||thFuzzyDate(ret)}
     if(rd&&DEST==='TH'){rd=thWeekFix(ret,rd)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境日期(返程) '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
     else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期（原文：'+retDbg(ret)+'）')}
