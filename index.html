@@ -105,7 +105,7 @@ h2{font-size:26px;line-height:1.3;letter-spacing:-.3px;margin-bottom:6px}
 .dest-flag svg{width:100%;height:100%;display:block}
 [data-f="purpose"],[data-f="occupation"],[data-f="deptflight"]{display:none}
 body.dest-th [data-f="purpose"],body.dest-th [data-f="occupation"],body.dest-th [data-f="deptflight"]{display:block}
-body.dest-th [data-f="passportExp"]{display:none}
+body.dest-th [data-f="passportExp"],body.dest-th [data-f="pob"]{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:11px;padding:13px 22px;font-size:15px;font-weight:700;text-decoration:none;border:none;min-height:44px;transition:transform .12s,box-shadow .2s,background .2s}
 .btn:active{transform:translateY(1px)}
 .btn-yellow{background:var(--yellow);color:var(--navy);box-shadow:0 4px 14px rgba(240,176,0,.35)}
@@ -417,7 +417,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <span id="ocrMsg">正在加载识别引擎…</span>
         <span class="bar"><i id="ocrBar"></i></span>
       </div>
-      <div class="notice" style="margin-bottom:0;margin-top:14px"><b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。</div>
+      <div class="notice" style="margin-bottom:0;margin-top:14px" id="scanHint"><b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。</div>
     </div>
     <!-- 全屏扫描界面：对准机读区自动识别 -->
     <div class="scan-overlay" id="scanOverlay" hidden>
@@ -743,6 +743,9 @@ var FLAG_MY='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#fff"/>
 var FLAG_TH='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#A51931"/><rect y="3.6" width="32" height="14.8" fill="#F4F5F8"/><rect y="7.3" width="32" height="7.4" fill="#2D2A4A"/></svg>';
 var MY_STATE_OPTS='';
 var STATE_KEEP={MY:'',TH:''};
+var MY_ACCOM_OPTS='';
+var ACCOM_KEEP={MY:'',TH:''};
+var TH_ACCOM_OPTS='<option value="HOTEL">酒店 / 旅馆 HOTEL</option><option value="FRIEND">亲友住所 FRIEND\'S PLACE</option><option value="OTHER">其他 OTHER</option>';
 var DEST_CFG={
   MY:{name:'马来西亚入境卡（MDAC）',flag:FLAG_MY,
     notice:'<b>提醒：</b>MDAC 官方申请<b>免费</b>，行程须在提交日起 3 天内（含当日）；提交后请查收邮件中的 PIN 码 / 二维码，入境时向移民官员出示。The official application is free; arrival must be within 3 days of submission.'},
@@ -764,6 +767,16 @@ function applyDestUI(){
     st._dest=DEST;
     st.value=STATE_KEEP[DEST]||'';
   }
+  var ac=$('#f-accom');
+  if(ac){
+    if(!MY_ACCOM_OPTS)MY_ACCOM_OPTS=ac.innerHTML;
+    if(ac.value)ACCOM_KEEP[ac._dest||'MY']=ac.value;
+    ac.innerHTML=th?'<option value="">请选择 Select…</option>'+TH_ACCOM_OPTS:MY_ACCOM_OPTS;
+    ac._dest=DEST;
+    ac.value=ACCOM_KEEP[DEST]||'';
+  }
+  var sh=document.getElementById('scanHint');
+  if(sh)sh.innerHTML=th?'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、国籍</b>；联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。':'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。';
   setLabel('f-state',th?'府 / 省<span class="en">Province</span><span class="req">*</span>':'州属<span class="en">State</span><span class="req">*</span>');
   setLabel('f-city',th?'城市 / 县<span class="en">City / District</span><span class="req">*</span>':'城市<span class="en">City</span><span class="req">*</span>');
   setLabel('f-address',th?'住宿地址（酒店名 + 街道）<span class="en">Address in Thailand</span><span class="req">*</span>':'地址第一行<span class="en">Address Line 1</span><span class="req">*</span>');
@@ -860,7 +873,7 @@ var RULES={
   passport:[function(v){return /^[A-Z0-9]{5,20}$/i.test(v)},'护照号须为 5-20 位字母数字'],
   dob:[function(v){return !!v},'请选择出生日期'],
   nationality:[function(v){return !!v},'请填写国籍'],
-  pob:[function(v){return !!v},'请填写出生地'],
+  pob:[function(v){return DEST==='TH'?true:!!v},'请填写出生地'],
   sex:[function(v){return !!v},'请选择性别'],
   occupation:[function(v){return DEST==='MY'?true:!!v},'请填写职业（泰国表必填，如 ENGINEER）'],
   passportExp:[function(v){return DEST==='TH'?true:!!v},'请选择护照有效期'],
@@ -923,7 +936,7 @@ var GROUPS=[
   {t:'行程信息 Traveling Information',keys:['arrival','departure','flight','deptflight','mode','purpose','lastPort','accommodation','address','address2','state','postcode','city']}
 ];
 var HIDE_MY={occupation:1,purpose:1,deptflight:1};
-var HIDE_TH={passportExp:1};
+var HIDE_TH={passportExp:1,pob:1};
 function dispVal(k,d){
   var el=document.getElementById(IN_IDS[k]);
   if(el&&el.tagName==='SELECT'&&el.selectedIndex>0){return el.options[el.selectedIndex].text}
