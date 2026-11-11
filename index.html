@@ -521,8 +521,8 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <div class="upload-zone" id="travelZone" style="margin:16px 0 0;padding:22px 16px">
           <input type="file" id="travelFile" accept="image/*" multiple>
           <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M21.5 12L3 5l3.5 14 5.5-3.5 3 3.5 1.5-4.5L21.5 12z" stroke="#FFC72C" stroke-width="2" stroke-linejoin="round"/><path d="M21.5 12L9 15" stroke="#FFC72C" stroke-width="2"/></svg></div>
-          <b>上传去程机票截图，自动识别行程</b>
-          <span>只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
+          <b id="travelZoneTitle">上传去程机票截图，自动识别行程</b>
+          <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
         <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111a</div>
@@ -740,6 +740,24 @@ function loadDest(){try{DEST=localStorage.getItem('mdac_dest')==='TH'?'TH':'MY'}
 function setDest(d){DEST=(d==='TH'?'TH':'MY');try{localStorage.setItem('mdac_dest',DEST)}catch(e){}}
 var TH_PROVINCES=['BANGKOK','AMNAT CHAROEN','ANG THONG','BUENG KAN','BURI RAM','CHACHOENGSAO','CHAI NAT','CHAIYAPHUM','CHANTHABURI','CHIANG MAI','CHIANG RAI','CHONBURI','CHUMPHON','KALASIN','KAMPHAENG PHET','KANCHANABURI','KHON KAEN','KRABI','LAMPANG','LAMPHUN','LOEI','LOP BURI','MAE HONG SON','MAHA SARAKHAM','MUKDAHAN','NAKHON NAYOK','NAKHON PATHOM','NAKHON PHANOM','NAKHON RATCHASIMA','NAKHON SAWAN','NAKHON SI THAMMARAT','NAN','NARATHIWAT','NONG BUA LAMPHU','NONG KHAI','NONTHABURI','PATHUM THANI','PATTANI','PHANG NGA','PHATTHALUNG','PHAYAO','PHETCHABUN','PHETCHABURI','PHICHIT','PHITSANULOK','PHRA NAKHON SI AYUTTHAYA','PHRAE','PHUKET','PRACHINBURI','PRACHUAP KHIRI KHAN','RANONG','RATCHABURI','RAYONG','ROI ET','SA KAE','SAKON NAKHON','SAMUT PRAKAN','SAMUT SAKHON','SAMUT SONGKHRAM','SARABURI','SATUN','SING BURI','SI SA KET','SONGKHLA','SUKHOTHAI','SUPHAN BURI','SURAT THANI','SURIN','TAK','TRANG','TRAT','UBON RATCHATHANI','UDON THANI','UTTHAI THANI','UTTARADIT','YALA','YASOTHON'];
 var FLAG_MY='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#fff"/><rect y="1.2" width="32" height="3.2" fill="#C8102E"/><rect y="8.8" width="32" height="3.2" fill="#C8102E"/><rect y="17.6" width="32" height="3.2" fill="#C8102E"/><rect width="14.5" height="22" fill="#012169"/><path d="M8.6 7.6a3.8 3.8 0 100 6.8 4.8 4.8 0 01-1.4-6.7 3.4 3.4 0 011.4-.1z" fill="#FFC72C"/><circle cx="10.4" cy="9.1" r=".8" fill="#FFC72C"/></svg>';
+/* 泰国地名（中文/英文）→ 府 + 官方县/区选项名（酒店订单截图识别用） */
+var TH_PLACES=[['廊曼','BANGKOK','DON MUEANG'],['DON MUEANG','BANGKOK','DON MUEANG'],['素万那普','BANGKOK','PATHUM WAN'],['SUVARNABHUMI','BANGKOK','PATHUM WAN'],['SUKHUMVIT','BANGKOK','WATTANA'],['曼谷','BANGKOK','PATHUM WAN'],['BANGKOK','BANGKOK','PATHUM WAN'],['普吉','PHUKET','KATHU'],['PHUKET','PHUKET','KATHU'],['清迈','CHIANG MAI','MUEANG CHIANG MAI'],['CHIANGMAI','CHIANG MAI','MUEANG CHIANG MAI'],['CHIANG RAI','CHIANG RAI','MUEANG CHIANG RAI'],['清莱','CHIANG RAI','MUEANG CHIANG RAI'],['芭提雅','CHONBURI','BANG LAMUNG'],['芭堤雅','CHONBURI','BANG LAMUNG'],['PATTAYA','CHONBURI','BANG LAMUNG'],['华欣','PRACHUAP KHIRI KHAN','HUA HIN'],['HUAHIN','PRACHUAP KHIRI KHAN','HUA HIN'],['HUA HIN','PRACHUAP KHIRI KHAN','HUA HIN'],['苏梅','SURAT THANI','KO SAMUI'],['SAMUI','SURAT THANI','KO SAMUI'],['甲米','KRABI','MUEANG KRABI'],['KRABI','KRABI','MUEANG KRABI'],['合艾','SONGKHLA','HAT YAI'],['HATYAI','SONGKHLA','HAT YAI'],['HAT YAI','SONGKHLA','HAT YAI'],['皮皮','KRABI','MUEANG KRABI'],['PHI PHI','KRABI','MUEANG KRABI']];
+function pickThaiPlace(sq){
+  if(!sq)return null;
+  var up=sq.toUpperCase().replace(/\s+/g,'');
+  for(var i=0;i<TH_PLACES.length;i++){
+    var k=TH_PLACES[i][0].toUpperCase().replace(/\s+/g,'');
+    if(up.indexOf(k)>-1)return{s:TH_PLACES[i][1],c:TH_PLACES[i][2]};
+  }
+  return null;
+}
+function pickThaiRet(sq){
+  // 泰国返程票城市对判定：出发城市为泰国城市（曼谷/普吉/清迈等 → 中国城市）
+  if(!sq)return false;
+  var thCity=['曼谷','普吉','清迈','清莱','芭提雅','芭堤雅','华欣','苏梅','甲米','合艾','素叻','PATTAYA','BANGKOK','PHUKET','CHIANG MAI','CHIANG RAI','KRABI','SAMUI','HUA HIN','HAT YAI'];
+  for(var i=0;i<thCity.length;i++){if(sq.indexOf(thCity[i])>-1)return true}
+  return false;
+}
 var FLAG_TH='<svg viewBox="0 0 32 22"><rect width="32" height="22" fill="#A51931"/><rect y="3.6" width="32" height="14.8" fill="#F4F5F8"/><rect y="7.3" width="32" height="7.4" fill="#2D2A4A"/></svg>';
 var MY_STATE_OPTS='';
 var STATE_KEEP={MY:'',TH:''};
@@ -756,6 +774,15 @@ function applyDestUI(){
   var th=DEST==='TH',cfg=DEST_CFG[DEST]||DEST_CFG.MY;
   document.body.classList.toggle('dest-th',th);
   document.body.classList.toggle('dest-my',!th);
+  // 切到泰国时清空酒店地址/城市/邮编（马来西亚随机酒店示例不适用于泰国，泰国需上传酒店订单截图）
+  var _st0=document.getElementById('f-state');
+  var _was=(_st0&&_st0._dest)||'MY';
+  if(th&&_was!=='TH'){
+    ['f-address','f-address2','f-city','f-postcode'].forEach(function(id2){
+      var e3=document.getElementById(id2);
+      if(e3){e3.value='';try{e3.dispatchEvent(new Event('change',{bubbles:true}))}catch(e){}}
+    });
+  }
   var el=document.getElementById('destName');if(el)el.textContent=cfg.name;
   el=document.getElementById('destFlag');if(el)el.innerHTML=cfg.flag;
   el=document.getElementById('destNotice');if(el)el.innerHTML=cfg.notice;
@@ -777,6 +804,9 @@ function applyDestUI(){
   }
   var sh=document.getElementById('scanHint');
   if(sh)sh.innerHTML=th?'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、国籍</b>；联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。':'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。';
+  var tzT=document.getElementById('travelZoneTitle'),tzS=document.getElementById('travelZoneSub');
+  if(tzT)tzT.textContent=th?'上传机票与酒店截图，自动识别行程':'上传去程机票截图，自动识别行程';
+  if(tzS)tzS.textContent=th?'上传去程机票、返程机票、酒店订单截图 · 抵达/离境日期、航班号、出发国、酒店与府县均从截图识别，不会自动生成示例 · Click or drag screenshots':'只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots';
   setLabel('f-state',th?'府 / 省<span class="en">Province</span><span class="req">*</span>':'州属<span class="en">State</span><span class="req">*</span>');
   setLabel('f-city',th?'城市 / 县<span class="en">City / District</span><span class="req">*</span>':'城市<span class="en">City</span><span class="req">*</span>');
   setLabel('f-address',th?'住宿地址（酒店名 + 街道）<span class="en">Address in Thailand</span><span class="req">*</span>':'地址第一行<span class="en">Address Line 1</span><span class="req">*</span>');
@@ -853,8 +883,8 @@ function restoreDraft(){
     }
   }catch(e){}
   clearTravelFields();
-  // 酒店为随机示例：每次加载页面重新随机换一组
-  try{autoGenHotel(true)}catch(e0){}
+  // 酒店为随机示例：每次加载页面重新随机换一组（泰国 TDAC 不自动生成酒店，需上传酒店订单截图）
+  if(DEST!=='TH'){try{autoGenHotel(true)}catch(e0){}}
 }
 
 /* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
@@ -1670,6 +1700,7 @@ function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
   var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
+  function flightCands(s){return (s.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(s.match(/[0-9][A-Z]\d{3,4}/g)||[])}
   function squash(t){return t.replace(/[ \t]/g,'')}
   function cleanCity(s){
     var t=s;
@@ -1687,7 +1718,9 @@ function applyTravelTexts(texts){
       var mm=ms[k].match(/^([\u4e00-\u9fa5]{2,8})[-–—]([\u4e00-\u9fa5]{2,8})$/);
       if(!mm)continue;
       if(mm[2].indexOf('吉隆')>-1){if(!inbound){inbound=t;inbOrg=cleanCity(mm[1])}break}
+      if(DEST==='TH'&&!inbound&&pickThaiRet(mm[2])){inbound=t;inbOrg=cleanCity(mm[1]);break}
       if(mm[1].indexOf('吉隆')>-1){if(!ret)ret=t;break}
+      if(DEST==='TH'&&!ret&&pickThaiRet(mm[1])){ret=t;break}
     }
   });
   // 携程 App 航班详情页兜底：先于订单页第二遍兜底执行（否则整段文本会被误当作订单行），
@@ -1747,7 +1780,6 @@ function applyTravelTexts(texts){
     }
     var kidx=sq.indexOf('KUL');
     var seg=(kidx>-1?sq.slice(0,kidx):sq).split('\n').filter(function(L){return L.indexOf('承运')<0}).join('\n');
-    function flightCands(s){return (s.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(s.match(/[0-9][A-Z]\d{3,4}/g)||[])}
     var codes=flightCands(seg);
     var fn=codes?codes[codes.length-1]:null;
     if(!fn){var all2=flightCands(sq);if(all2.length)fn=all2[all2.length-1]}
@@ -1770,33 +1802,65 @@ function applyTravelTexts(texts){
   if(ret){
     var rd=firstDate(ret);
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境 '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
+    if(DEST==='TH'){
+      // 泰国离境航班从返程机票截图识别（不自动生成）
+      var rcs=flightCands(squash(ret));
+      if(rcs&&rcs.length){
+        var rfn=rcs[0];
+        if(travelSetField('f-deptflight',rfn))done.push('离境航班 '+rfn);
+      }else{
+        warn.push('未识别到离境航班号，请手动填写');
+      }
+    }
   }
   if(hotel){
-    var lines=hotel.split(/\n/),name='',street='',pc='';
+    var lines=hotel.split(/\n/),name='',street='',streetCands=[],pc='';
     var pl=hotel.match(/\b(\d{5})\b/);
     if(pl)pc=pl[1];
     lines.forEach(function(L){
       var t=L.trim();
       var tn=t.replace(/^[\s\d#*•.,、。]+\s*/,'');
-      if(!name&&/^[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(tn)&&/Suite|Hotel|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced/i.test(tn)){
+      var HOTEL_WORD=/Suite|Hotel|Hilton|Holiday|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced|Marriott|Hyatt|Sheraton|Kempinski|Mandarin|InterContinental|Sofitel|Anantara|Amari|Centara|Renaissance|Crowne|Shangri/i;
+      if(!name&&/^[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(tn)&&HOTEL_WORD.test(tn)){
         name=tn.replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').replace(/^([a-z][A-Za-z]?\s+)/,'').trim();
       }
+      // OCR 行首常有噪声（如「in = | Radisson Hotel…」）：从行中提取大写开头、含酒店关键词的连续片段
+      if(!name){
+        var nm=tn.match(/(?:^|[^A-Za-z])([A-Z][A-Za-z0-9 .'\-&]{8,})/);
+        if(nm&&HOTEL_WORD.test(nm[1])){
+          name=nm[1].replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').trim();
+        }
+      }
       if(pc&&t.indexOf(pc)>-1){
-        var sm=t.replace(/^[^A-Za-z]+/,'').match(/^([A-Za-z][A-Za-z0-9 .']{3,40}?)[,，]/);
+        // 允许门牌号开头（439/1 Chang Akat Uthit Road, Don Mueang）与斜杠
+        var sm=t.replace(/^[^A-Za-z0-9]+/,'').match(/^([A-Za-z0-9][A-Za-z0-9 .'\-/]{3,60}?)[,，]/);
         if(sm)street=sm[1].replace(/^[A-Z]\s{2,}/,'').replace(/^JIn\b/,'Jln').replace(/\s{2,}/g,' ').trim();
       }
+      // 地址行与邮编行分开的订单（如携程酒店详情）：收集所有含逗号的英文地址候选，取最长（门牌号行 > 行政区行）
+      var sm2=t.replace(/^[^A-Za-z0-9]+/,'').match(/^([A-Za-z0-9][A-Za-z0-9 .'\-/]{7,60}?)[,，]/);
+      if(sm2){
+        var cand2=sm2[1].trim();
+        if(cand2.replace(/[^A-Za-z]/g,'').length>=8)streetCands.push(cand2);
+      }
     });
+    street=streetCands.reduce(function(a,b){return b.length>a.length?b:a},'');
     if(DEST!=='TH'){
       var sc=pickStateCity(squash(hotel));
       if(sc){
         if(travelSetField('f-state',sc.s))done.push('州属 '+sc.s);
         if(sc.c&&travelSetField('f-city',sc.c))done.push('城市 '+sc.c);
       }
+    }else{
+      var tsc=pickThaiPlace(squash(hotel));
+      if(tsc){
+        if(travelSetField('f-state',tsc.s))done.push('府 '+tsc.s);
+        if(tsc.c&&travelSetField('f-city',tsc.c))done.push('城市/县 '+tsc.c);
+      }
     }
     if(pc){travelSetField('f-postcode',pc);done.push('邮编 '+pc)}
     if(name){travelSetField('f-address',name);done.push('酒店 '+name)}
     if(street){travelSetField('f-address2',street);done.push('街道 '+street)}
-    travelSetField('f-accom','01');
+    travelSetField('f-accom',DEST==='TH'?'HOTEL':'01');
     var hc=firstDate(hotel);
     if(hc&&!document.getElementById('f-arrival').value){if(travelSetField('f-arrival',hc))done.push('入住日期 '+hc)}
   }
@@ -1804,9 +1868,13 @@ function applyTravelTexts(texts){
     // 未识别到抵达日期：保持留空，不自动生成示例日期；离境与酒店依赖抵达日期，也不会自动生成
     warn.push('未识别到抵达日期，请手动填写');
   }
+  if(DEST==='TH'&&!document.getElementById('f-address').value){
+    warn.push('未识别到酒店，请上传酒店订单截图或手动填写住宿信息');
+  }
   // 本次扫描未识别到离境日期时：只要识别到了抵达日期，就强制按抵达+7~9重新生成离境（覆盖手动填过的旧值）
+  // （泰国不自动生成：日期、离境航班与酒店均来自截图识别）
   var hasArr=!!document.getElementById('f-arrival').value;
-  var ag=autoGenReturnHotel(hasArr&&!retDateFound);
+  var ag=(DEST==='TH')?[]:autoGenReturnHotel(hasArr&&!retDateFound);
   if(ag.length)done=done.concat(ag);
   var today=new Date().toISOString().slice(0,10);
   var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
@@ -2898,7 +2966,7 @@ function bmTh(d){
   tryFill();
 }
 function init(){
-  window.__mdac={parseMRZ:parseMRZ,readDraft:readDraft,validate:validate,autoGenHotel:autoGenHotel,autoGenReturnHotel:autoGenReturnHotel};
+  window.__mdac={parseMRZ:parseMRZ,readDraft:readDraft,validate:validate,autoGenHotel:autoGenHotel,autoGenReturnHotel:autoGenReturnHotel,applyTravelTexts:applyTravelTexts,travelSetField:travelSetField};
   loadDest();
   $$('.country-card').forEach(function(a){
     a.addEventListener('click',function(){setDest(a.getAttribute('data-dest')||'MY')});
