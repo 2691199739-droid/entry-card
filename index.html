@@ -1713,9 +1713,9 @@ function applyTravelTexts(texts){
   texts.forEach(function(t){
     var sq=squash(t);
     if(!hotel&&/入住|离店|房型|酒店详情|预订成功|酒店设施|套房|酒店/.test(sq)){hotel=t;return}
-    var ms=sq.match(/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/g)||[];
+    var ms=sq.match(/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/g)||[];
     for(var k=0;k<ms.length;k++){
-      var mm=ms[k].match(/^([\u4e00-\u9fa5]{2,8})[-–—]([\u4e00-\u9fa5]{2,8})$/);
+      var mm=ms[k].match(/^([\u4e00-\u9fa5]{2,8})[-–—→]([\u4e00-\u9fa5]{2,8})$/);
       if(!mm)continue;
       if(mm[2].indexOf('吉隆')>-1){if(!inbound){inbound=t;inbOrg=cleanCity(mm[1])}break}
       if(DEST==='TH'&&!inbound&&pickThaiRet(mm[2])){inbound=t;inbOrg=cleanCity(mm[1]);break}
@@ -1773,7 +1773,7 @@ function applyTravelTexts(texts){
     String(t||'').split(/\n+/).forEach(function(L){
       var sq=squash(L).replace(/[A-Z]{2}\d{3,4}/g,'').replace(/[0-9][A-Z]\d{3,4}/g,'');
       var m1=sq.match(/(?:20\d{2})?(\d{3,6})周/);
-      var pair=/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/.test(sq);
+      var pair=/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/.test(sq);
       if(!m1&&!pair)return;
       var seqs=sq.match(/\d{3,6}/g)||[];
       var seq=m1?m1[1]:null;
@@ -1834,9 +1834,9 @@ function applyTravelTexts(texts){
       if(!rdd)rdd=thDigitsDate(t);
       if(!rdd)return;
       var ok=null,hasPair=false;
-      var ms2=sq2.match(/[\u4e00-\u9fa5]{2,8}[-–—][\u4e00-\u9fa5]{2,8}/g)||[];
+      var ms2=sq2.match(/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/g)||[];
       for(var k2=0;k2<ms2.length;k2++){
-        var mm2=ms2[k2].match(/^([\u4e00-\u9fa5]{2,8})[-–—]([\u4e00-\u9fa5]{2,8})$/);
+        var mm2=ms2[k2].match(/^([\u4e00-\u9fa5]{2,8})[-–—→]([\u4e00-\u9fa5]{2,8})$/);
         if(!mm2)continue;
         hasPair=true;
         if(pickThaiRet(mm2[2])){ok=false;break}   // 到达侧是泰国城市 → 去程方向，跳过
