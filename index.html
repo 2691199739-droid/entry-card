@@ -1942,6 +1942,13 @@ function applyTravelTexts(texts){
   var av=document.getElementById('f-arrival').value,dv=document.getElementById('f-departure').value;
   if(av&&av<today)warn.push('识别到的抵达日期 '+av+' 已过去，请点开日期修改');
   if(dv&&dv<today)warn.push('识别到的离境日期 '+dv+' 已过去，请点开日期修改');
+  // 泰国：离境日期合理性提醒（OCR 数字错读时能及早发现，如「18」认成「8」）
+  if(DEST==='TH'&&av&&dv){
+    var gapMs=new Date(dv+'T00:00:00')-new Date(av+'T00:00:00');
+    var gapD=Math.round(gapMs/86400000);
+    if(gapD<1)warn.push('离境日期不晚于抵达日期，请核对离境日期');
+    else if(gapD>60)warn.push('离境与抵达相隔 '+gapD+' 天，请核对离境日期是否识别正确');
+  }
   if(!done.length){var noMsg='没认出行程信息，请试试更清晰的截图，或手动填写 Nothing recognized';if(warn.length)noMsg+='（'+warn.join('；')+'）';setTravel(noMsg,'bad');return}
   var autoOnly=done.every(function(s){return s.indexOf('自动生成')===0});
   var msg=(autoOnly?'已自动填入：':'已识别并填入：')+done.join('；')+'。请核对，可直接修改。';
