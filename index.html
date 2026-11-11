@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111b</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111c</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1836,14 +1836,13 @@ function applyTravelTexts(texts){
     return y+'-'+mm+'-'+dd;
   }
   function thLooseDate(t){
-    // 泰国最后手段：日期行「月」「日」字被 OCR 读坏时，从含城市对且含「周」的行
+    // 泰国最后手段：日期行「月」「日」字被 OCR 读坏时，从含城市对的行
     // 直接取数字作为 月/日（如「98」→9月8日，再经 thWeekFix 周X反推修正十位）。
     // 数字 2 位直接拆；3 位尝试 (1,2)/(2,1) 两种拆法，均有效即歧义放弃；≥4 位放弃。
     var res=null;
     String(t||'').split(/\n+/).forEach(function(L){
       var sq=squash(L);
       if(!/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/.test(sq))return;
-      if(!/周/.test(sq))return;
       sq=sq.replace(/20\d{2}/g,'').replace(/[A-Z]{2}\d{3,4}/g,'').replace(/\d{1,2}:\d{2}/g,'').replace(/\d{4,}/g,'');
       var digits=(sq.match(/\d+/g)||[]).join('').split('');
       if(digits.length===2){
@@ -1859,6 +1858,15 @@ function applyTravelTexts(texts){
       }
     });
     return res;
+  }
+  function retDbg(t){
+    // 调试用：取返程票文本中含城市对的行拼接，帮助用户反馈手机端 OCR 原文
+    var hits=[];
+    String(t||'').split(/\n+/).forEach(function(L){
+      var sq=squash(L);
+      if(/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/.test(sq))hits.push(sq);
+    });
+    return (hits.join(' | ')||squash(t||'')).slice(0,80);
   }
   function thDigitsDate(t){
     // 泰国：机票日期「月/日」字被 OCR 整个吃掉时的数字串恢复。
@@ -1989,7 +1997,7 @@ function applyTravelTexts(texts){
     if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thLooseDate(ret)}
     if(rd&&DEST==='TH'){rd=thWeekFix(ret,rd)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境日期(返程) '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
-    else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期（原文：'+squash(ret).slice(0,34)+'）')}
+    else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期（原文：'+retDbg(ret)+'）')}
     if(DEST==='TH'){
       // 泰国离境航班从返程机票截图识别（不自动生成）
       var rcs=flightCands(squash(ret));
