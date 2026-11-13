@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         入境卡自动填表（马来西亚 MDAC / 泰国 TDAC）
 // @namespace    https://2691199739-droid.github.io/entry-card/
-// @version      1.0.1
+// @version      1.0.2
 // @description  配合「入境卡助手」使用：从助手页点「一键跳转」带码打开官方页，进入申报表单后全部资料自动填入，无需粘贴。助手页面：https://2691199739-droid.github.io/entry-card/
 // @author       entry-card-helper
 // @match        https://imigresen-online.imi.gov.my/*
