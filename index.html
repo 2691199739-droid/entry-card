@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111f</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111g</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1816,9 +1816,10 @@ function applyTravelTexts(texts){
     return res;
   }
   function thWeekFix(sq,iso){
-    // 泰国：OCR 把「9月18日」读成「9月8日」时，用票面「周X」反推恢复十位。
-    // 例：「9月8日 周五」→ 8号是周二 → 试 18 号是周五 → 恢复 2026-09-18。
-    // 仅当票面星期与识别日期的星期一致时才修正，不一致保持原值（宁可留错值提示，不猜错）。
+    // 票面「周X」反推纠偏：OCR 常把日期数字读丢/读错，分两类补位——
+    // 丢十位：「9月18日」读成「9月8日」→ 候选 d / d+10 / d+20；
+    // 丢个位：「11月13日」读成「11月1日」→ 候选 10d .. 10d+9（d 为个位数时）。
+    // 只在与票面星期一致的候选中取唯一/最近者；读对（d 本身星期匹配）保持原值；无解/歧义保持原值。
     var wm=squash(sq).match(/周([一二三四五六日天])/);
     if(!wm||!iso)return iso;
     var wk={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
@@ -1827,11 +1828,18 @@ function applyTravelTexts(texts){
     var p=iso.split('-'),y=+p[0],m=+p[1],d=+p[2];
     if(!y||!m||!d)return iso;
     var dim=new Date(y,m,0).getDate();
-    var best=null;
-    [d,d+10,d+20].forEach(function(x){
-      if(x<=dim&&new Date(y,m-1,x).getDay()===want)best=x;
+    var cand=[d,d+10,d+20];
+    if(d>=1&&d<=9){for(var k=0;k<=9;k++){var v=d*10+k;if(v!==d)cand.push(v)}}
+    var seen={},hits=[];
+    cand.forEach(function(x){
+      if(x<1||x>dim||seen[x])return;seen[x]=1;
+      if(new Date(y,m-1,x).getDay()===want)hits.push(x);
     });
-    if(best===null||best===d)return iso;
+    if(!hits.length)return iso;
+    if(hits.indexOf(d)>-1)return iso;
+    hits.sort(function(a,b){return Math.abs(a-d)-Math.abs(b-d)});
+    if(hits.length>1&&Math.abs(hits[0]-d)===Math.abs(hits[1]-d))return iso;
+    var best=hits[0];
     var mm=(m<10?'0'+m:m),dd=(best<10?'0'+best:best);
     return y+'-'+mm+'-'+dd;
   }
