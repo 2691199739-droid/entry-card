@@ -11,7 +11,16 @@ function bmMy(d,maxTries){
   function g(i){return document.getElementById(i)}
   function st(i,v){var e=g(i);if(!e||!v)return 0;e.value=v;if(e.type==='date'&&!e.value)e.value=String(v).split('/').reverse().join('-');e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));return String(e.value)===String(v)?1:0}
   function ss(i,v){var e=g(i);if(!e||!v)return 0;return ssEl(e,v)}
-  function ssEl(e,v){if(!e||!v)return 0;var val=String(v).toUpperCase().replace(/\s+/g,'');var words=String(v).toUpperCase().split(/\s+/).filter(Boolean);var o=e.options;if(!o)return 0;for(var j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase().replace(/\s+/g,'');var ot=String(o[j].text).replace(/\s+/g,' ').toUpperCase();var otc=ot.replace(/\s+/g,'');if(ov===val||otc===val||ot.indexOf(String(v).toUpperCase())>-1||ov.indexOf(val)>-1||otc.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}for(var k=0;k<o.length;k++){var tt=String(o[k].text).toUpperCase();if(words.length&&words.every(function(w){return tt.indexOf(w)>-1})){e.value=o[k].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}return 0}
+  function ssEl(e,v){if(!e||!v)return 0;var val=String(v).toUpperCase().replace(/\s+/g,'');var words=String(v).toUpperCase().split(/\s+/).filter(Boolean);var o=e.options;if(!o)return 0;var j;
+  /* 1) 精确：option value 或 text（去空格）等于 val，优先命中，避免短码误匹配 */
+  for(j=0;j<o.length;j++){var ov=String(o[j].value).toUpperCase().replace(/\s+/g,'');var otc=String(o[j].text).replace(/\s+/g,'').toUpperCase();if(ov===val||otc===val){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}
+  /* 2) option value 包含 val（3 字码以上才用，防止单字符/双字符误匹配） */
+  if(val.length>=3){for(j=0;j<o.length;j++){var ov2=String(o[j].value).toUpperCase().replace(/\s+/g,'');if(ov2.indexOf(val)>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}}
+  /* 3) 单词前缀匹配：THA -> THAILAND，避免 SOUTH AFRICA（SOUTHAFRICA 含 THA）被误命中 */
+  for(j=0;j<o.length;j++){var tt=String(o[j].text).toUpperCase();var toks=tt.split(/[^A-Z0-9]+/).filter(Boolean);if(words.length&&words.every(function(w){return toks.some(function(tk){return tk.indexOf(w)===0})})){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}
+  /* 4) 兜底：任意位置子串（旧逻辑，放最后） */
+  for(j=0;j<o.length;j++){var tt2=String(o[j].text).toUpperCase();if(words.length&&words.every(function(w){return tt2.indexOf(w)>-1})){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}}
+  return 0}
   /* 州代码→官方名称关键词（官方州下拉是名称体系，如 WP KUALA LUMPUR） */
   var MY_STATE_ALIAS={'01':['JOHOR'],'02':['KEDAH'],'03':['KELANTAN'],'04':['MELAKA','MALACCA'],'05':['NEGERI SEMBILAN','SEMBILAN'],'06':['PAHANG'],'07':['PULAU PINANG','PENANG'],'08':['PERAK'],'09':['PERLIS'],'10':['SELANGOR'],'11':['TERENGGANU'],'12':['SABAH'],'13':['SARAWAK'],'14':['KUALA LUMPUR'],'15':['LABUAN'],'16':['PUTRAJAYA']};
   /* 中文城市/常用缩写 → 英文（官方城市列表是英文） */
@@ -73,7 +82,7 @@ function bmMy(d,maxTries){
     return 0;
   }
   function fmt(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:String(iso)}
-  function mapData(x){return{name:x.name,passNo:x.passport,dob:fmt(x.dob),nationality:x.nationality,pob:x.pob,sex:x.sex==='Male'?'1':(x.sex==='Female'?'2':''),passExp:fmt(x.passportExp),email:x.email,confirmEmail:x.email,region:x.ccode,mobile:x.mobile,arr:fmt(x.arrival),dep:fmt(x.departure),vessel:x.flight,mode:x.mode==='Air'?'1':(x.mode==='Land'?'2':(x.mode==='Sea'?'3':'')),embark:x.lastPort,stay:x.accommodation,addr1:x.address,addr2:x.address2||'',state:x.state,city:x.city,postcode:x.postcode}}
+  function mapData(x){return{name:x.name,passNo:x.passport,dob:fmt(x.dob),nationality:x.nationality,pob:x.pob,sex:x.sex==='Male'?'1':(x.sex==='Female'?'2':''),passExp:fmt(x.passportExp),email:x.email,confirmEmail:x.email,region:x.ccode,mobile:x.mobile,arr:fmt(x.arrival),dep:fmt(x.departure),vessel:x.flight,mode:x.mode==='Air'?'1':(x.mode==='Land'?'2':(x.mode==='Sea'?'3':'')),embark:x.lastPortName||x.lastPort,stay:x.accommodation,addr1:x.address,addr2:x.address2||'',state:x.state,city:x.city,postcode:x.postcode}}
   function directFill(D){
     var n=0,miss=[];
     var T1=[['name',D.name],['passNo',D.passNo],['dob',D.dob],['passExpDte',D.passExp],['email',D.email],['confirmEmail',D.confirmEmail],['mobile',D.mobile],['arrDt',D.arr],['depDt',D.dep],['vesselNm',D.vessel],['accommodationAddress1',D.addr1],['accommodationAddress2',D.addr2],['accommodationPostcode',D.postcode]];
@@ -118,13 +127,7 @@ function bmMy(d,maxTries){
       return t.join(' ').toLowerCase();
     }
     function S(e,v){
-      if(e.tagName==='SELECT'){
-        var o=e.options;
-        for(var j=0;j<o.length;j++){
-          if(o[j].text.toLowerCase().indexOf(String(v).toLowerCase())>-1){e.value=o[j].value;e.dispatchEvent(new Event('change',{bubbles:true}));return 1}
-        }
-        return 0;
-      }
+      if(e.tagName==='SELECT'){return ssEl(e,v)}
       e.value=v;
       if(e.type==='date'&&!e.value)e.value=String(v).split('/').reverse().join('-');
       e.dispatchEvent(new Event('input',{bubbles:true}));
