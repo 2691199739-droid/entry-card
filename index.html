@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111d</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111e</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1858,25 +1858,23 @@ function applyTravelTexts(texts){
     return res;
   }
   function thLooseDate(t){
-    // 泰国最后手段：日期行「月」「日」字被 OCR 读坏时，从含城市对的行
-    // 直接取数字作为 月/日（如「98」→9月8日，再经 thWeekFix 周X反推修正十位）。
-    // 数字 2 位直接拆；3 位尝试 (1,2)/(2,1) 两种拆法，均有效即歧义放弃；≥4 位放弃。
+    // 日期行「月」「日」两个字被 OCR 整个吃掉时（只剩数字），从含城市对的行取数字作为 月/日。
+    // 若行内仍有「月/日」字，说明只是形近字符问题，交给 thFuzzyDate，本函数跳过。
+    // 数字：两个数字段（「11 13」）直接作月/日；单段 2 位拆、3 位两种拆法（歧义放弃），≥4 位放弃。
     var res=null;
     String(t||'').split(/\n+/).forEach(function(L){
       var sq=squash(L);
       if(!/[\u4e00-\u9fa5]{2,8}[-–—→][\u4e00-\u9fa5]{2,8}/.test(sq))return;
-      sq=sq.replace(/20\d{2}/g,'').replace(/[A-Z]{2}\d{3,4}/g,'').replace(/\d{1,2}:\d{2}/g,'').replace(/\d{4,}/g,'');
-      var digits=(sq.match(/\d+/g)||[]).join('').split('');
-      if(digits.length===2){
-        var m2=+digits[0],d2=+digits[1];
-        if(m2>=1&&m2<=12&&d2>=1&&d2<=31){var iso2=mdacDate(m2,d2);if(iso2)res=iso2}
-      }else if(digits.length===3){
-        var ok=[];
-        [[digits[0],digits[1]+digits[2]],[digits[0]+digits[1],digits[2]]].forEach(function(p){
-          var mm=+p[0],dd=+p[1];
-          if(mm>=1&&mm<=12&&dd>=1&&dd<=31)ok.push([mm,dd]);
-        });
-        if(ok.length===1){var iso3=mdacDate(ok[0][0],ok[0][1]);if(iso3)res=iso3}
+      if(/[月日]/.test(sq))return;
+      var line=L.replace(/20\d{2}/g,'').replace(/[A-Z]{2}\d{3,4}/gi,'').replace(/[0-9][A-Z]\d{3,4}/gi,'').replace(/\d{1,2}:\d{2}/g,'').replace(/\d{4,}/g,'');
+      var segs=line.match(/\d+/g)||[];
+      if(segs.length>=2){
+        var mm=+segs[0],dd=+segs[1];
+        if(mm>=1&&mm<=12&&dd>=1&&dd<=31){var iso=mdacDate(mm,dd);if(iso)res=iso}
+      }else if(segs.length===1){
+        var digits=segs[0].split('');
+        if(digits.length===2){var a=+digits[0],b=+digits[1];if(a>=1&&a<=12&&b>=1&&b<=31){var iso2=mdacDate(a,b);if(iso2)res=iso2}}
+        else if(digits.length===3){var ok=[];[[digits[0],digits[1]+digits[2]],[digits[0]+digits[1],digits[2]]].forEach(function(p){var x=+p[0],y=+p[1];if(x>=1&&x<=12&&y>=1&&y<=31)ok.push([x,y])});if(ok.length===1){var iso3=mdacDate(ok[0][0],ok[0][1]);if(iso3)res=iso3}}
       }
     });
     return res;
@@ -1982,8 +1980,10 @@ function applyTravelTexts(texts){
     if(!d){
       texts.forEach(function(t){if(d)return;if(t===inbound||t===ret||t===hotel)return;var dd=firstDate(t)||enDate(t);if(dd)d=dd;});
     }
-    // 泰国：日期「月/日」字被 OCR 整个吃掉时，用数字串启发式恢复（如「6月22日」→「68220」）
-    if(!d&&DEST==='TH'){d=thDigitsDate(inbound)}
+    // 日期「月/日」字被 OCR 读坏时的兜底：数字串恢复 / 数字对 / 形近字母映射（泰国、马来西亚通用）
+    if(!d){d=thDigitsDate(inbound)||thFuzzyDate(inbound)||thLooseDate(inbound)}
+    // 票面「周X」校验纠偏（如 OCR 把 13 读成 8 时按星期恢复十位）
+    if(d){d=thWeekFix(inbound,d)}
     if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
     if(inbOrg){
       var trn=squash(inbound).match(/中转([\u4e00-\u9fa5]{2,6})/);
@@ -2016,7 +2016,7 @@ function applyTravelTexts(texts){
   }
   if(ret){
     var rd=(sameRet?(lastDate(ret)||lastEnDate(ret)):null)||firstDate(ret)||enDate(ret);
-    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thLooseDate(ret)||thFuzzyDate(ret)}
+    if(!rd&&DEST==='TH'){rd=thDigitsDate(ret)||thFuzzyDate(ret)||thLooseDate(ret)}
     if(rd&&DEST==='TH'){rd=thWeekFix(ret,rd)}
     if(rd){retDateFound=true;if(travelSetField('f-departure',rd))done.push('离境日期(返程) '+rd);else warn.push('离境日期 '+rd+' 不在可选范围')}
     else if(DEST==='TH'){warn.push('返程机票的离境日期识别不明确，请手动选择离境日期（原文：'+retDbg(ret)+'）')}
