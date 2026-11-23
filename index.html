@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111i</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111j</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1677,6 +1677,7 @@ function scanFlightDetail(texts){
     });
     if(slid.length)flight=slid[slid.length-1];
   }
+  if(flight&&flight.charAt(0)==='0')flight='O'+flight.slice(1);   // O 被读成 0 还原（OD523→0D523）
   // 出发城市：优先机场别称行（广州白云T3→广州），其次中国城市名
   var from=null;
   var AIR={'白云':'广州','浦东':'上海','虹桥':'上海','大兴':'北京','首都':'北京','宝安':'深圳','双流':'成都','天府':'成都','萧山':'杭州','高崎':'厦门','长水':'昆明','江北':'重庆','咸阳':'西安','滨海':'天津','天河':'武汉','黄花':'长沙','禄口':'南京','胶东':'青岛','美兰':'海口','凤凰':'三亚','长乐':'福州','新郑':'郑州','地窝堡':'乌鲁木齐'};
@@ -1704,7 +1705,10 @@ function applyTravelTexts(texts){
   try{window.__travelTexts=(texts||[]).slice();localStorage.setItem('lastTravelTexts',JSON.stringify(texts||[]))}catch(e0){}
   if(!texts.length){setTravel('没有识别到文字，请换更清晰的截图 No text recognized','bad');return}
   var done=[],warn=[],inbound=null,ret=null,hotel=null,inbOrg='',retDateFound=false;
-  function flightCands(s){var t=(s||'').replace(/\d{1,2}:\d{2}/g,'').replace(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d*/gi,'');return (t.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(t.match(/[0-9][A-Z]\d{3,4}/g)||[])}
+  // 航班号归一：IATA 航空公司二字码不以数字 0 开头，OCR 把首字母 O 读成 0（如 OD523→0D523）时还原为 O；
+  // 真实数字开头码（3U/9C/8L/5J/6E 等首字为 1-9）不受影响。
+  function fixFlight0(c){return c.charAt(0)==='0'?'O'+c.slice(1):c}
+  function flightCands(s){var t=(s||'').replace(/\d{1,2}:\d{2}/g,'').replace(/(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\d*/gi,'');return (t.match(/[A-Z]{2}\d{3,4}/g)||[]).concat(t.match(/[0-9][A-Z]\d{3,4}/g)||[]).map(fixFlight0)}
   function squash(t){return t.replace(/[ \t]/g,'')}
   function cleanCity(s){
     var t=s;
@@ -1775,6 +1779,8 @@ function applyTravelTexts(texts){
     }
   }
   function mdacDate(m1,m2){
+    // 月/日越界（含 OCR 把日位读成 0/O 产生的 0 日）视为无效，返回 null 交给后续兜底或留空提示
+    if(!(m1>=1&&m1<=12&&m2>=1&&m2<=31))return null;
     var y=new Date().getFullYear();
     return y+'-'+(m1<10?'0'+m1:m1)+'-'+(m2<10?'0'+m2:m2);
   }
@@ -2087,7 +2093,7 @@ function applyTravelTexts(texts){
     lines.forEach(function(L){
       var t=L.trim();
       var tn=t.replace(/^[\s\d#*•.,、。]+\s*/,'');
-      var HOTEL_WORD=/Suite|Hotel|Hilton|Holiday|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced|Marriott|Hyatt|Sheraton|Kempinski|Mandarin|InterContinental|Sofitel|Anantara|Amari|Centara|Renaissance|Crowne|Shangri/i;
+      var HOTEL_WORD=/Suite|Hotel|Hilton|Holiday|Express|Inn|Residence|Hostel|Apart|Lodge|House|Global|Palace|Court|Garden|Home|Serviced|Marriott|Hyatt|Sheraton|Kempinski|Mandarin|InterContinental|Sofitel|Anantara|Amari|Centara|Renaissance|Crowne|Shangri|Westin|Novotel|Ibis|Ritz|Carlton|Meridien|Seasons|Conrad|Regis|DoubleTree|Hampton|Ramada|Wyndham|Swissotel|Ascott|Somerset|Citadines|Dorsett|Sunway|Oakwood|Fraser|Dynasty|Traders|Aloft|Element|Moxy|Resort|Villa|Grand/i;
       if(!name&&/^[A-Za-z][A-Za-z0-9 .'\-&]{8,}$/.test(tn)&&HOTEL_WORD.test(tn)){
         name=tn.replace(/[^A-Za-z0-9 .'\-&]/g,'').replace(/\s+\d+$/,'').replace(/^([a-z][A-Za-z]?\s+)/,'').trim();
       }
