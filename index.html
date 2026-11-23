@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111h</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111i</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -2014,12 +2014,28 @@ function applyTravelTexts(texts){
     // 票面「周X」校验纠偏（如 OCR 把 13 读成 8 时按星期恢复十位）
     if(d){d=thWeekFix(inbound,d)}
     if(d){if(travelSetField('f-arrival',d))done.push('抵达 '+d);else warn.push('抵达日期 '+d+' 不在可选范围')}
+    var portMap={北京:'CHN',上海:'CHN',广州:'CHN',深圳:'CHN',成都:'CHN',杭州:'CHN',西安:'CHN',厦门:'CHN',昆明:'CHN',重庆:'CHN',天津:'CHN',武汉:'CHN',长沙:'CHN',南京:'CHN',青岛:'CHN',海口:'CHN',三亚:'CHN',福州:'CHN',郑州:'CHN',乌鲁木齐:'CHN',香港:'HKG',澳门:'MAC',台北:'TWN',新加坡:'SGP',曼谷:'THA',首尔:'KOR',东京:'JPN',大阪:'JPN'};
+    var enPortMap={'BEIJING':'CHN','SHANGHAI':'CHN','GUANGZHOU':'CHN','SHENZHEN':'CHN','CHENGDU':'CHN','HANGZHOU':'CHN','XIAMEN':'CHN','KUNMING':'CHN','CHONGQING':'CHN','TIANJIN':'CHN','WUHAN':'CHN','CHANGSHA':'CHN','NANJING':'CHN','QINGDAO':'CHN','HAIKOU':'CHN','SANYA':'CHN','FUZHOU':'CHN','ZHENGZHOU':'CHN','URUMQI':'CHN','HONGKONG':'HKG','MACAU':'MAC','TAIPEI':'TWN','SINGAPORE':'SGP','BANGKOK':'THA','SEOUL':'KOR','TOKYO':'JPN','OSAKA':'JPN','DONMUEANG':'THA','SUVARNABHUMI':'THA'};
+    var IATA_ORG={'DMK':'THA','BKK':'THA','SIN':'SGP','HKG':'HKG','MFM':'MAC','TPE':'TWN','ICN':'KOR','NRT':'JPN','HND':'JPN','KIX':'JPN','PEK':'CHN','PKX':'CHN','PVG':'CHN','SHA':'CHN','CAN':'CHN','SZX':'CHN','CTU':'CHN','TFU':'CHN','HGH':'CHN','KMG':'CHN','CKG':'CHN','XIY':'CHN','TSN':'CHN','WUH':'CHN','CSX':'CHN','NKG':'CHN','TAO':'CHN','HAK':'CHN','SYX':'CHN','FOC':'CHN','CGO':'CHN','URC':'CHN','XMN':'CHN'};
+    // 出发地兜底（仅马来西亚）：城市对破折号被 OCR 读坏（如「曼谷一吉隆坡」）时 inbOrg 为空，
+    // 从票面机场别称/城市名/IATA 三字码反推出发地（目的地吉隆坡不在映射表内，天然排除）。
+    // 仅在 inbOrg 为空时启用，不改动城市对已正确识别的结果，保持马来西亚原有默认行为。
+    if(DEST!=='TH'&&!inbOrg){
+      var sqOrg=squash(inbound);
+      var AIRALIAS={'廊曼':'曼谷','素万那普':'曼谷','白云':'广州','浦东':'上海','虹桥':'上海','大兴':'北京','首都':'北京','宝安':'深圳','双流':'成都','天府':'成都','萧山':'杭州','高崎':'厦门','长水':'昆明','江北':'重庆','咸阳':'西安','滨海':'天津','天河':'武汉','黄花':'长沙','禄口':'南京','胶东':'青岛','美兰':'海口','凤凰':'三亚','长乐':'福州','新郑':'郑州','地窝堡':'乌鲁木齐','樟宜':'新加坡'};
+      var orgFound='';
+      for(var al in AIRALIAS){if(sqOrg.indexOf(al)>-1){orgFound=AIRALIAS[al];break}}
+      if(!orgFound){for(var pc in portMap){if(sqOrg.indexOf(pc)>-1){orgFound=pc;break}}}
+      if(orgFound)inbOrg=orgFound;
+      if(!inbOrg){
+        var iatas=sqOrg.match(/[A-Z]{3}/g)||[];
+        for(var ia=0;ia<iatas.length;ia++){if(IATA_ORG[iatas[ia]]){inbOrg=iatas[ia];break}}
+      }
+    }
     if(inbOrg){
       var trn=squash(inbound).match(/中转([\u4e00-\u9fa5]{2,6})/);
       if(trn)inbOrg=cleanCity(trn[1]);
-      var portMap={北京:'CHN',上海:'CHN',广州:'CHN',深圳:'CHN',成都:'CHN',杭州:'CHN',西安:'CHN',厦门:'CHN',昆明:'CHN',重庆:'CHN',天津:'CHN',武汉:'CHN',长沙:'CHN',南京:'CHN',青岛:'CHN',海口:'CHN',三亚:'CHN',福州:'CHN',郑州:'CHN',乌鲁木齐:'CHN',香港:'HKG',澳门:'MAC',台北:'TWN',新加坡:'SGP',曼谷:'THA',首尔:'KOR',东京:'JPN',大阪:'JPN'};
-      var enPortMap={'BEIJING':'CHN','SHANGHAI':'CHN','GUANGZHOU':'CHN','SHENZHEN':'CHN','CHENGDU':'CHN','HANGZHOU':'CHN','XIAMEN':'CHN','KUNMING':'CHN','CHONGQING':'CHN','TIANJIN':'CHN','WUHAN':'CHN','CHANGSHA':'CHN','NANJING':'CHN','QINGDAO':'CHN','HAIKOU':'CHN','SANYA':'CHN','FUZHOU':'CHN','ZHENGZHOU':'CHN','URUMQI':'CHN','HONGKONG':'HKG','MACAU':'MAC','TAIPEI':'TWN','SINGAPORE':'SGP','BANGKOK':'THA','SEOUL':'KOR','TOKYO':'JPN','OSAKA':'JPN','DONMUEANG':'THA','SUVARNABHUMI':'THA'};
-      var code=portMap[inbOrg]||enPortMap[String(inbOrg||'').toUpperCase().replace(/\s+/g,'')]||(/^[\u4e00-\u9fa5]+$/.test(inbOrg)?'CHN':'');
+      var code=portMap[inbOrg]||enPortMap[String(inbOrg||'').toUpperCase().replace(/\s+/g,'')]||IATA_ORG[inbOrg]||(/^[\u4e00-\u9fa5]+$/.test(inbOrg)?'CHN':'');
       if(code&&travelSetField('f-lastport',code))done.push('出发地 '+inbOrg);
     }
     var kidx=sq.indexOf('KUL');
