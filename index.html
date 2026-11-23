@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111m</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111n</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1545,9 +1545,20 @@ function dstr(dt){var m=dt.getMonth()+1,dd=dt.getDate();return dt.getFullYear()+
 function autoGenHotel(force){
   var done=[],auto=[];
   var th=DEST==='TH';
-  var h=(th?TH_HOTELS:KL_HOTELS)[randInt(0,(th?TH_HOTELS:KL_HOTELS).length-1)];
-  if(force||!document.getElementById('f-address').value){
+  var pool=th?TH_HOTELS:KL_HOTELS;
+  var addrEl=document.getElementById('f-address');
+  var willSet=force||!(addrEl&&addrEl.value);
+  var h;
+  if(willSet){
+    // 每次实际生成时换一个与上次不同的酒店：记住上次名称，刷新必不重复（池>1 时排除上次）
+    var last='';try{last=localStorage.getItem('mdac_last_hotel')||''}catch(e){}
+    var idx=randInt(0,pool.length-1),tries=0;
+    while(pool.length>1&&pool[idx].name===last&&tries<25){idx=randInt(0,pool.length-1);tries++}
+    h=pool[idx];
+    try{localStorage.setItem('mdac_last_hotel',h.name)}catch(e){}
     if(travelSetField('f-address',h.name))auto.push('酒店 '+h.name);
+  }else{
+    h=pool[randInt(0,pool.length-1)];
   }
   if(force||!document.getElementById('f-address2').value){
     travelSetField('f-address2',h.street||'');
