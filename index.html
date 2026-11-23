@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111j</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111k</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1595,9 +1595,9 @@ function autoGenReturnHotel(force){
 /* 酒店/地址文本 → 州代码+城市（sq 为去除空白后的文本） */
 function pickStateCity(sq){
   if(!sq)return null;
-  var ZH={'吉隆':['14','KUALA LUMPUR'],'雪兰莪':['10',''],'槟城':['07','GEORGE TOWN'],'乔治':['07','GEORGE TOWN'],'马六甲':['04','MELAKA'],'新山':['01','JOHOR BAHRU'],'莎阿南':['10','SHAH ALAM'],'巴生':['10','KLANG'],'八打灵再也':['10','PETALING JAYA'],'梳邦再也':['10','SUBANG JAYA'],'布城':['16','PUTRAJAYA'],'亚庇':['12','KOTA KINABALU'],'古晋':['13','KUCHING'],'仙本那':['12','SEMPORNA'],'兰卡威':['02','LANGKAWI'],'怡保':['08','IPOH'],'芙蓉':['05','SEREMBAN'],'关丹':['06','KUANTAN'],'云顶':['06','GENTING HIGHLANDS'],'哥打基纳巴卢':['12','KOTA KINABALU']};
+  var ZH={'吉隆':['14','KUALA LUMPUR'],'雪兰莪':['10',''],'槟城':['07','GEORGE TOWN'],'乔治':['07','GEORGE TOWN'],'马六甲':['04','MELAKA'],'新山':['01','JOHOR BAHRU'],'莎阿南':['10','SHAH ALAM'],'巴生':['10','KLANG'],'八打灵再也':['10','PETALING JAYA'],'梳邦再也':['10','SUBANG JAYA'],'布城':['16','PUTRAJAYA'],'亚庇':['12','KOTA KINABALU'],'古晋':['13','KUCHING'],'仙本那':['12','SEMPORNA'],'兰卡威':['02','LANGKAWI'],'怡保':['08','IPOH'],'芙蓉':['05','SEREMBAN'],'关丹':['06','KUANTAN'],'云顶':['06','GENTING HIGHLANDS'],'哥打基纳巴卢':['12','KOTA KINABALU'],'美里':['13','MIRI'],'米里':['13','MIRI'],'诗巫':['13','SIBU'],'民都鲁':['13','BINTULU'],'山打根':['12','SANDAKAN'],'斗湖':['12','TAWAU'],'拿笃':['12','LAHAD DATU'],'根地咬':['12','KENINGAU'],'金马仑':['06','CAMERON HIGHLANDS'],'波德申':['05','PORT DICKSON']};
   for(var k in ZH){if(sq.indexOf(k)>-1)return{s:ZH[k][0],c:ZH[k][1]}}
-  var EN={'KUALALUMPUR':['14','KUALA LUMPUR'],'PETALINGJAYA':['10','PETALING JAYA'],'SHAHALAM':['10','SHAH ALAM'],'SUBANGJAYA':['10','SUBANG JAYA'],'KLANG':['10','KLANG'],'GEORGETOWN':['07','GEORGE TOWN'],'PENANG':['07','GEORGE TOWN'],'MELAKA':['04','MELAKA'],'MALACCA':['04','MELAKA'],'JOHORBAHRU':['01','JOHOR BAHRU'],'IPOH':['08','IPOH'],'SEREMBAN':['05','SEREMBAN'],'KUANTAN':['06','KUANTAN'],'KOTAKINABALU':['12','KOTA KINABALU'],'KUCHING':['13','KUCHING'],'PUTRAJAYA':['16','PUTRAJAYA'],'LABUAN':['15','LABUAN'],'SEMPORNA':['12','SEMPORNA'],'LANGKAWI':['02','LANGKAWI'],'GENTINGHIGHLANDS':['06','GENTING HIGHLANDS'],'ALORSETAR':['02','ALOR SETAR'],'KUALATERENGGANU':['11','KUALA TERENGGANU'],'KOTABHARU':['03','KOTA BHARU'],'KANGAR':['09','KANGAR']};
+  var EN={'KUALALUMPUR':['14','KUALA LUMPUR'],'PETALINGJAYA':['10','PETALING JAYA'],'SHAHALAM':['10','SHAH ALAM'],'SUBANGJAYA':['10','SUBANG JAYA'],'KLANG':['10','KLANG'],'GEORGETOWN':['07','GEORGE TOWN'],'PENANG':['07','GEORGE TOWN'],'MELAKA':['04','MELAKA'],'MALACCA':['04','MELAKA'],'JOHORBAHRU':['01','JOHOR BAHRU'],'IPOH':['08','IPOH'],'SEREMBAN':['05','SEREMBAN'],'KUANTAN':['06','KUANTAN'],'KOTAKINABALU':['12','KOTA KINABALU'],'KUCHING':['13','KUCHING'],'PUTRAJAYA':['16','PUTRAJAYA'],'LABUAN':['15','LABUAN'],'SEMPORNA':['12','SEMPORNA'],'LANGKAWI':['02','LANGKAWI'],'GENTINGHIGHLANDS':['06','GENTING HIGHLANDS'],'ALORSETAR':['02','ALOR SETAR'],'KUALATERENGGANU':['11','KUALA TERENGGANU'],'KOTABHARU':['03','KOTA BHARU'],'KANGAR':['09','KANGAR'],'MIRI':['13','MIRI'],'SIBU':['13','SIBU'],'BINTULU':['13','BINTULU'],'SANDAKAN':['12','SANDAKAN'],'TAWAU':['12','TAWAU'],'LAHADDATU':['12','LAHAD DATU'],'KENINGAU':['12','KENINGAU'],'CAMERONHIGHLANDS':['06','CAMERON HIGHLANDS'],'PORTDICKSON':['05','PORT DICKSON'],'PINANG':['07','GEORGE TOWN']};
   var up=sq.toUpperCase();
   for(var e in EN){if(up.indexOf(e)>-1)return{s:EN[e][0],c:EN[e][1]}}
   return null;
