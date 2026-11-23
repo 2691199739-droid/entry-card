@@ -521,11 +521,11 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
         <div class="upload-zone" id="travelZone" style="margin:16px 0 0;padding:22px 16px">
           <input type="file" id="travelFile" accept="image/*" multiple>
           <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M21.5 12L3 5l3.5 14 5.5-3.5 3 3.5 1.5-4.5L21.5 12z" stroke="#FFC72C" stroke-width="2" stroke-linejoin="round"/><path d="M21.5 12L9 15" stroke="#FFC72C" stroke-width="2"/></svg></div>
-          <b id="travelZoneTitle">上传去程机票截图，自动识别行程</b>
-          <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
+          <b id="travelZoneTitle">上传去程机票与酒店截图，自动识别行程</b>
+          <span id="travelZoneSub">去程机票截图 → 抵达日期/航班号/出发国 · 酒店订单截图 → 真实住宿信息（不随机生成，也可手动填）· 离境日期识别到抵达后自动生成示例（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111k</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111l</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -805,8 +805,8 @@ function applyDestUI(){
   var sh=document.getElementById('scanHint');
   if(sh)sh.innerHTML=th?'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、国籍</b>；联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。':'<b>识别范围：</b>护照资料页底部的机读区（MRZ）可识别 <b>姓名拼音、护照号、出生日期、性别、有效期、国籍</b>；出生地与联系方式在下方手动补充；<b>行程信息可用下方「机票 / 酒店订单截图」自动识别</b>。';
   var tzT=document.getElementById('travelZoneTitle'),tzS=document.getElementById('travelZoneSub');
-  if(tzT)tzT.textContent=th?'上传机票与酒店截图，自动识别行程':'上传去程机票截图，自动识别行程';
-  if(tzS)tzS.textContent=th?'上传去程机票、返程机票、酒店订单截图 · 抵达/离境日期、航班号、出发国、酒店与府县均从截图识别，不会自动生成示例 · Click or drag screenshots':'只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots';
+  if(tzT)tzT.textContent=th?'上传机票与酒店截图，自动识别行程':'上传去程机票与酒店截图，自动识别行程';
+  if(tzS)tzS.textContent=th?'上传去程机票、返程机票、酒店订单截图 · 抵达/离境日期、航班号、出发国、酒店与府县均从截图识别，不会自动生成示例 · Click or drag screenshots':'去程机票截图 → 抵达日期/航班号/出发国 · 酒店订单截图 → 真实住宿信息（不随机生成，也可手动填）· 离境日期识别到抵达后自动生成示例（可修改） · Click or drag screenshots';
   setLabel('f-state',th?'府 / 省<span class="en">Province</span><span class="req">*</span>':'州属<span class="en">State</span><span class="req">*</span>');
   setLabel('f-departure',th?'离境日期（返程）<span class="en">Date of Departure</span><span class="req">*</span>':'离境日期<span class="en">Date of Departure</span><span class="req">*</span>');
   setLabel('f-deptflight',th?'返程航班<span class="en">Departure Flight No.</span><span class="req">*</span>':'离境航班<span class="en">Departure Flight No.</span><span class="req">*</span>');
@@ -887,8 +887,7 @@ function restoreDraft(){
     }
   }catch(e){}
   clearTravelFields();
-  // 酒店为随机示例：每次加载页面重新随机换一组（泰国 TDAC 不自动生成酒店，需上传酒店订单截图）
-  if(DEST!=='TH'){try{autoGenHotel(true)}catch(e0){}}
+  // 马来西亚住宿不再随机生成示例：保留草稿里来自截图/手动的真实酒店，未识别时留空待填（避免刷新覆盖真实地址）
 }
 
 /* ===== 内置资料（在线版留空，护照信息通过 OCR 或手动填写）===== */
@@ -1588,8 +1587,7 @@ function autoGenReturnHotel(force){
     if(travelSetField('f-deptflight',fl.no))auto.push('离境航班 '+fl.label);
   }
   if(auto.length)done.push('自动生成：'+auto.join('；'));
-  var hd=autoGenHotel(false);
-  if(hd.length)done=done.concat(hd);
+  // 马来西亚酒店不再随机生成：住宿只来自酒店订单截图或手动填写（与泰国一致）
   return done;
 }
 /* 酒店/地址文本 → 州代码+城市（sq 为去除空白后的文本） */
@@ -2141,7 +2139,7 @@ function applyTravelTexts(texts){
     // 未识别到抵达日期：保持留空，不自动生成示例日期；离境与酒店依赖抵达日期，也不会自动生成
     warn.push('未识别到抵达日期，请手动填写');
   }
-  if(DEST==='TH'&&!document.getElementById('f-address').value){
+  if(!document.getElementById('f-address').value){
     warn.push('未识别到酒店，请上传酒店订单截图或手动填写住宿信息');
   }
   // 本次扫描未识别到离境日期时：只要识别到了抵达日期，就强制按抵达+7~9重新生成离境（覆盖手动填过的旧值）
