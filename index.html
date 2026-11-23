@@ -525,7 +525,7 @@ footer .fine{border-top:1px solid var(--line);margin-top:26px;padding-top:16px;f
           <span id="travelZoneSub">只需去程机票截图 · 抵达日期、航班号、出发国自动填入 · 返程与酒店无需截图，识别到抵达日期后自动生成（可修改） · Click or drag screenshots</span>
         </div>
         <div class="ocr-status" id="travelStatus"><span class="spin"></span><span id="travelMsg"></span></div>
-        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111n</div>
+        <div class="en" id="pageVer" style="font-size:11px;color:var(--mut);margin-top:6px">版本 261111o</div>
         <div class="grid">
           <div class="field" data-f="arrival">
             <label for="f-arrival">抵达日期<span class="en">Date of Arrival</span><span class="req">*</span></label>
@@ -1892,12 +1892,13 @@ function applyTravelTexts(texts){
         var wk={'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'日':0,'天':0};
         var want=wk[wm[1]];
         if(want===undefined)return;
-        var y=new Date().getFullYear(),dim=new Date(y,mm2,0).getDate(),best=null;
+        var y=new Date().getFullYear(),dim=new Date(y,mm2,0).getDate(),hits=[];
         for(var k=0;k<=9;k++){
           var dd2=t*10+k;
-          if(dd2>=1&&dd2<=dim&&new Date(y,mm2-1,dd2).getDay()===want)best=dd2;
+          if(dd2>=1&&dd2<=dim&&new Date(y,mm2-1,dd2).getDay()===want)hits.push(dd2);
         }
-        if(best!==null){var iso2=mdacDate(mm2,best);if(iso2)res=iso2}
+        // 同一十位窗口内可能有两个同星期候选（如 10 与 17 同为周二），歧义时不臆测，留空交手动/其它兜底
+        if(hits.length===1){var iso2=mdacDate(mm2,hits[0]);if(iso2)res=iso2}
         return;
       }
     });
